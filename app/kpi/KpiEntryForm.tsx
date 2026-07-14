@@ -45,7 +45,7 @@ export function KpiEntryForm({
         </Link>
 
         <div className="flex items-center gap-4">
-          <BrandMark size="md" linked={false} />
+          <BrandMark size="md" />
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-gold">
               KPI intake

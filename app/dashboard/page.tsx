@@ -53,7 +53,7 @@ export default function DashboardGate() {
         </Link>
 
         <div className="mb-6 flex flex-col items-center text-center">
-          <BrandMark size="md" linked={false} />
+          <BrandMark size="md" />
           <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.2em] text-gold">
             Cluster admin
           </p>
