@@ -8,6 +8,12 @@ export const SBU_GROUP_LABEL: Record<SbuGroup, string> = {
   logistics: 'Logistics Cluster',
 };
 
+// Enroll numbers are always exactly 6 digits, numeric only.
+export function isValidEnroll(value: string): boolean {
+  return /^\d{6}$/.test(value);
+}
+export const ENROLL_HINT = 'Enroll number must be exactly 6 digits.';
+
 export const MONTHS = [
   'Jan',
   'Feb',

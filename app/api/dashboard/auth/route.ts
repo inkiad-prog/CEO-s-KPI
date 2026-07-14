@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { pool } from '@/lib/db';
+import { ENROLL_HINT, isValidEnroll } from '@/lib/kpi';
 
 export async function POST(req: NextRequest) {
   const { enrollNumber } = await req.json();
@@ -9,6 +10,10 @@ export async function POST(req: NextRequest) {
       { ok: false, error: 'Enroll number is required.' },
       { status: 400 }
     );
+  }
+
+  if (!isValidEnroll(enrollNumber.trim())) {
+    return NextResponse.json({ ok: false, error: ENROLL_HINT }, { status: 400 });
   }
 
   const result = await pool.query(

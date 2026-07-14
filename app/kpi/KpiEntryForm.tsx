@@ -4,7 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BrandMark } from '@/components/BrandMark';
-import { MONTHS, ROLES, currentMonthValue, type Role } from '@/lib/kpi';
+import { WarningIcon } from '@/components/icons';
+import { ENROLL_HINT, MONTHS, ROLES, currentMonthValue, isValidEnroll, type Role } from '@/lib/kpi';
 
 export function KpiEntryForm({
   sbus,
@@ -16,9 +17,14 @@ export function KpiEntryForm({
   const [sbuId, setSbuId] = useState('');
   const [month, setMonth] = useState(currentMonthValue);
   const [enrollNumber, setEnrollNumber] = useState('');
+  const [enrollError, setEnrollError] = useState<string | null>(null);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!isValidEnroll(enrollNumber)) {
+      setEnrollError(ENROLL_HINT);
+      return;
+    }
     const params = new URLSearchParams({
       role,
       sbuId,
@@ -136,12 +142,25 @@ export function KpiEntryForm({
                 type="text"
                 inputMode="numeric"
                 autoComplete="off"
+                maxLength={6}
                 required
                 value={enrollNumber}
-                onChange={(e) => setEnrollNumber(e.target.value)}
-                className="w-full rounded-lg border border-line bg-surface px-4 py-2.5 text-ink outline-none focus:border-gold"
+                onChange={(e) => {
+                  setEnrollNumber(e.target.value.replace(/\D/g, '').slice(0, 6));
+                  setEnrollError(null);
+                }}
+                aria-invalid={enrollError ? true : undefined}
+                className={`w-full rounded-lg border bg-surface px-4 py-2.5 font-mono text-ink outline-none focus:border-gold ${
+                  enrollError ? 'border-status-risk' : 'border-line'
+                }`}
                 placeholder="e.g. 512345"
               />
+              {enrollError && (
+                <p role="alert" className="mt-2 flex items-center gap-1.5 text-xs text-status-risk">
+                  <WarningIcon className="h-3.5 w-3.5 shrink-0" />
+                  {enrollError}
+                </p>
+              )}
             </div>
           </div>
 

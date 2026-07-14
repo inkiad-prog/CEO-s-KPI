@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { pool } from '@/lib/db';
-import { achievementPct, monthToDate, weightedScore, type Direction } from '@/lib/kpi';
+import { ENROLL_HINT, achievementPct, isValidEnroll, monthToDate, weightedScore, type Direction } from '@/lib/kpi';
 
 export async function POST(req: NextRequest) {
   const { role, sbuId, month, enrollNumber, entries } = await req.json();
 
   if (!role || !sbuId || !month || !enrollNumber || !Array.isArray(entries)) {
     return NextResponse.json({ error: 'Invalid payload.' }, { status: 400 });
+  }
+  if (!isValidEnroll(enrollNumber)) {
+    return NextResponse.json({ error: ENROLL_HINT }, { status: 400 });
   }
   const monthDate = monthToDate(month);
 
@@ -43,11 +46,19 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+    const evidenceLink = String(e.evidenceLink ?? '').trim();
+    const evidenceNote = String(e.evidenceNote ?? '').trim();
+    if (!evidenceLink || !evidenceNote) {
+      return NextResponse.json(
+        { error: 'Every KPI needs an evidence link and an evidence note before submitting.' },
+        { status: 400 }
+      );
+    }
     entryMap.set(e.kpiId, {
       targetValue: target,
       achievementValue: actual,
-      evidenceLink: String(e.evidenceLink ?? ''),
-      evidenceNote: String(e.evidenceNote ?? ''),
+      evidenceLink,
+      evidenceNote,
     });
   }
 

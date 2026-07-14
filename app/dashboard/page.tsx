@@ -4,6 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BrandMark } from '@/components/BrandMark';
+import { WarningIcon } from '@/components/icons';
+import { ENROLL_HINT, isValidEnroll } from '@/lib/kpi';
 
 export default function DashboardGate() {
   const router = useRouter();
@@ -13,8 +15,14 @@ export default function DashboardGate() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSubmitting(true);
     setError(null);
+
+    if (!isValidEnroll(enrollNumber)) {
+      setError(ENROLL_HINT);
+      return;
+    }
+
+    setSubmitting(true);
     try {
       const res = await fetch('/api/dashboard/auth', {
         method: 'POST',
@@ -73,15 +81,23 @@ export default function DashboardGate() {
             type="text"
             inputMode="numeric"
             autoComplete="off"
+            maxLength={6}
             value={enrollNumber}
-            onChange={(e) => setEnrollNumber(e.target.value)}
-            className="mt-2 w-full rounded-lg border border-line bg-surface px-4 py-2.5 text-ink outline-none transition-colors focus:border-gold"
+            onChange={(e) => {
+              setEnrollNumber(e.target.value.replace(/\D/g, '').slice(0, 6));
+              setError(null);
+            }}
+            aria-invalid={error ? true : undefined}
+            className={`mt-2 w-full rounded-lg border bg-surface px-4 py-2.5 font-mono text-ink outline-none transition-colors focus:border-gold ${
+              error ? 'border-status-risk' : 'border-line'
+            }`}
             placeholder="e.g. 565503"
             required
           />
 
           {error && (
-            <p role="alert" className="mt-3 text-sm text-status-risk">
+            <p role="alert" className="mt-3 flex items-center gap-1.5 text-sm text-status-risk">
+              <WarningIcon className="h-4 w-4 shrink-0" />
               {error}
             </p>
           )}

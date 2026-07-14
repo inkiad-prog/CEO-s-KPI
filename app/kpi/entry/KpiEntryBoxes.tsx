@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { BrandMark } from '@/components/BrandMark';
 import { Skeleton } from '@/components/Skeleton';
 import { StatusDot } from '@/components/StatusDot';
+import { WarningIcon } from '@/components/icons';
 import {
   PERSPECTIVE_COLOR,
   STATUS_COLOR,
@@ -73,6 +74,7 @@ export function KpiEntryBoxes({
   const [drafts, setDrafts] = useState<Record<number, Draft>>({});
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [attemptedSubmit, setAttemptedSubmit] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -94,18 +96,24 @@ export function KpiEntryBoxes({
       });
   }, [role, sbuId, month]);
 
+  const emptyDraft: Draft = { targetValue: '', achievementValue: '', evidenceLink: '', evidenceNote: '' };
+
+  function missingFields(draft: Draft) {
+    return {
+      targetValue: draft.targetValue === '' || !Number.isFinite(Number(draft.targetValue)),
+      achievementValue: draft.achievementValue === '' || !Number.isFinite(Number(draft.achievementValue)),
+      evidenceLink: draft.evidenceLink.trim() === '',
+      evidenceNote: draft.evidenceNote.trim() === '',
+    };
+  }
+
   const allFilled = useMemo(
     () =>
       data
         ? data.kpis.every((k) => {
-            const d = drafts[k.id];
-            return (
-              d &&
-              d.targetValue !== '' &&
-              Number.isFinite(Number(d.targetValue)) &&
-              d.achievementValue !== '' &&
-              Number.isFinite(Number(d.achievementValue))
-            );
+            const d = drafts[k.id] ?? emptyDraft;
+            const missing = missingFields(d);
+            return !missing.targetValue && !missing.achievementValue && !missing.evidenceLink && !missing.evidenceNote;
           })
         : false,
     [data, drafts]
@@ -117,8 +125,13 @@ export function KpiEntryBoxes({
 
   async function handleSubmit() {
     if (!data) return;
-    setSubmitting(true);
+    setAttemptedSubmit(true);
     setError(null);
+    if (!allFilled) {
+      setError('Every box is required — fill in the highlighted fields before submitting.');
+      return;
+    }
+    setSubmitting(true);
     const entries = data.kpis.map((k) => ({
       kpiId: k.id,
       targetValue: Number(drafts[k.id]?.targetValue),
@@ -211,6 +224,7 @@ export function KpiEntryBoxes({
                   ? Number(k.achievement_pct)
                   : null;
             const perspColor = PERSPECTIVE_COLOR[k.perspective];
+            const missing = attemptedSubmit && !data.locked ? missingFields(draft) : null;
 
             return (
               <div
@@ -252,30 +266,41 @@ export function KpiEntryBoxes({
                           {k.direction === 'higher_better'
                             ? 'higher better'
                             : 'lower better'}
-                          )
+                          ) <span className="text-status-risk">*</span>
                         </label>
                         {data.locked ? (
                           <span className="mt-0.5 block font-mono text-base font-semibold text-ink">
                             {k.target_value} {k.uom}
                           </span>
                         ) : (
-                          <div className="relative mt-1">
-                            <input
-                              id={`target-${k.id}`}
-                              type="number"
-                              step="any"
-                              value={draft.targetValue}
-                              onChange={(e) =>
-                                updateDraft(k.id, { targetValue: e.target.value })
-                              }
-                              onWheel={(e) => e.currentTarget.blur()}
-                              placeholder={examplePlaceholder(k.uom)}
-                              className="w-full rounded-lg border border-line bg-surface py-1.5 pl-2.5 pr-12 font-mono text-base font-semibold text-ink outline-none focus:border-gold"
-                            />
-                            <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-xs text-muted">
-                              {k.uom}
-                            </span>
-                          </div>
+                          <>
+                            <div className="relative mt-1">
+                              <input
+                                id={`target-${k.id}`}
+                                type="number"
+                                step="any"
+                                value={draft.targetValue}
+                                onChange={(e) =>
+                                  updateDraft(k.id, { targetValue: e.target.value })
+                                }
+                                onWheel={(e) => e.currentTarget.blur()}
+                                placeholder={examplePlaceholder(k.uom)}
+                                aria-invalid={missing?.targetValue ? true : undefined}
+                                className={`w-full rounded-lg border bg-surface py-1.5 pl-2.5 pr-12 font-mono text-base font-semibold text-ink outline-none focus:border-gold ${
+                                  missing?.targetValue ? 'border-status-risk' : 'border-line'
+                                }`}
+                              />
+                              <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-xs text-muted">
+                                {k.uom}
+                              </span>
+                            </div>
+                            {missing?.targetValue && (
+                              <p className="mt-1 flex items-center gap-1 text-[11px] text-status-risk">
+                                <WarningIcon className="h-3 w-3 shrink-0" />
+                                Required
+                              </p>
+                            )}
+                          </>
                         )}
                       </div>
                       <div>
@@ -283,30 +308,41 @@ export function KpiEntryBoxes({
                           htmlFor={`achievement-${k.id}`}
                           className="block text-xs text-muted"
                         >
-                          Achievement ({k.uom})
+                          Achievement ({k.uom}) <span className="text-status-risk">*</span>
                         </label>
                         {data.locked ? (
                           <span className="mt-0.5 block font-mono text-base font-semibold text-ink">
                             {k.achievement_value} {k.uom}
                           </span>
                         ) : (
-                          <div className="relative mt-1">
-                            <input
-                              id={`achievement-${k.id}`}
-                              type="number"
-                              step="any"
-                              value={draft.achievementValue}
-                              onChange={(e) =>
-                                updateDraft(k.id, { achievementValue: e.target.value })
-                              }
-                              onWheel={(e) => e.currentTarget.blur()}
-                              placeholder={examplePlaceholder(k.uom)}
-                              className="w-full rounded-lg border border-line bg-surface py-1.5 pl-2.5 pr-12 font-mono text-base font-semibold text-ink outline-none focus:border-gold"
-                            />
-                            <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-xs text-muted">
-                              {k.uom}
-                            </span>
-                          </div>
+                          <>
+                            <div className="relative mt-1">
+                              <input
+                                id={`achievement-${k.id}`}
+                                type="number"
+                                step="any"
+                                value={draft.achievementValue}
+                                onChange={(e) =>
+                                  updateDraft(k.id, { achievementValue: e.target.value })
+                                }
+                                onWheel={(e) => e.currentTarget.blur()}
+                                placeholder={examplePlaceholder(k.uom)}
+                                aria-invalid={missing?.achievementValue ? true : undefined}
+                                className={`w-full rounded-lg border bg-surface py-1.5 pl-2.5 pr-12 font-mono text-base font-semibold text-ink outline-none focus:border-gold ${
+                                  missing?.achievementValue ? 'border-status-risk' : 'border-line'
+                                }`}
+                              />
+                              <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-xs text-muted">
+                                {k.uom}
+                              </span>
+                            </div>
+                            {missing?.achievementValue && (
+                              <p className="mt-1 flex items-center gap-1 text-[11px] text-status-risk">
+                                <WarningIcon className="h-3 w-3 shrink-0" />
+                                Required
+                              </p>
+                            )}
+                          </>
                         )}
                       </div>
                       <div>
@@ -329,23 +365,34 @@ export function KpiEntryBoxes({
                           htmlFor={`evidence-link-${k.id}`}
                           className="block text-xs text-muted"
                         >
-                          Evidence link / data source
+                          Evidence link / data source <span className="text-status-risk">*</span>
                         </label>
                         {data.locked ? (
                           <p className="mt-1 break-words text-sm text-muted">
                             {k.evidence_link || '—'}
                           </p>
                         ) : (
-                          <input
-                            id={`evidence-link-${k.id}`}
-                            type="text"
-                            value={draft.evidenceLink}
-                            onChange={(e) =>
-                              updateDraft(k.id, { evidenceLink: e.target.value })
-                            }
-                            placeholder={`${k.data_source} — ${k.evidence_type}`}
-                            className="mt-1 w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-gold"
-                          />
+                          <>
+                            <input
+                              id={`evidence-link-${k.id}`}
+                              type="text"
+                              value={draft.evidenceLink}
+                              onChange={(e) =>
+                                updateDraft(k.id, { evidenceLink: e.target.value })
+                              }
+                              placeholder={`${k.data_source} — ${k.evidence_type}`}
+                              aria-invalid={missing?.evidenceLink ? true : undefined}
+                              className={`mt-1 w-full rounded-lg border bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-gold ${
+                                missing?.evidenceLink ? 'border-status-risk' : 'border-line'
+                              }`}
+                            />
+                            {missing?.evidenceLink && (
+                              <p className="mt-1 flex items-center gap-1 text-[11px] text-status-risk">
+                                <WarningIcon className="h-3 w-3 shrink-0" />
+                                Required
+                              </p>
+                            )}
+                          </>
                         )}
                       </div>
                       <div>
@@ -353,23 +400,34 @@ export function KpiEntryBoxes({
                           htmlFor={`evidence-note-${k.id}`}
                           className="block text-xs text-muted"
                         >
-                          Evidence note
+                          Evidence note <span className="text-status-risk">*</span>
                         </label>
                         {data.locked ? (
                           <p className="mt-1 break-words text-sm text-muted">
                             {k.evidence_note || '—'}
                           </p>
                         ) : (
-                          <input
-                            id={`evidence-note-${k.id}`}
-                            type="text"
-                            value={draft.evidenceNote}
-                            onChange={(e) =>
-                              updateDraft(k.id, { evidenceNote: e.target.value })
-                            }
-                            placeholder={k.required_evidence}
-                            className="mt-1 w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-gold"
-                          />
+                          <>
+                            <input
+                              id={`evidence-note-${k.id}`}
+                              type="text"
+                              value={draft.evidenceNote}
+                              onChange={(e) =>
+                                updateDraft(k.id, { evidenceNote: e.target.value })
+                              }
+                              placeholder={k.required_evidence}
+                              aria-invalid={missing?.evidenceNote ? true : undefined}
+                              className={`mt-1 w-full rounded-lg border bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-gold ${
+                                missing?.evidenceNote ? 'border-status-risk' : 'border-line'
+                              }`}
+                            />
+                            {missing?.evidenceNote && (
+                              <p className="mt-1 flex items-center gap-1 text-[11px] text-status-risk">
+                                <WarningIcon className="h-3 w-3 shrink-0" />
+                                Required
+                              </p>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
@@ -387,14 +445,15 @@ export function KpiEntryBoxes({
         {data && !data.locked && (
           <div className="mt-8">
             {error && (
-              <p role="alert" className="mb-3 text-sm text-status-risk">
+              <p role="alert" className="mb-3 flex items-center gap-1.5 text-sm text-status-risk">
+                <WarningIcon className="h-4 w-4 shrink-0" />
                 {error}
               </p>
             )}
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={!allFilled || submitting}
+              disabled={submitting}
               className="w-full rounded-lg bg-gold py-3 text-sm font-semibold text-[color:var(--color-on-gold)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:px-8"
             >
               {submitting ? 'Submitting…' : 'Submit & lock this month'}
