@@ -45,4 +45,6 @@ INSERT INTO dashboard_admins (enroll_number) VALUES
 ('565503'),
 ('567217'),
 ('569553'),
-('569138');
+('569138'),
+('124921'),
+('571392');
