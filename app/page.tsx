@@ -12,9 +12,7 @@ export default function Home() {
             Balanced scorecard · KPI intake &amp; rollup
           </p>
           <h1 className="mt-2 text-balance font-display text-5xl uppercase leading-[0.95] tracking-[-0.01em] text-ink sm:text-6xl">
-            Trading Cluster
-            <br />
-            CEO KPI
+            Cluster CEO KPI
           </h1>
           <p className="mt-4 max-w-sm text-pretty text-sm text-muted">
             The CEO&rsquo;s balanced scorecard for the Trading Cluster.

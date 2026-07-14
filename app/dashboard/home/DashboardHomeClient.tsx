@@ -73,6 +73,7 @@ export function DashboardHomeClient({
   // SBUs" view; picking a specific SBU always overrides them.
   const apiScope = scope === 'all' ? group : scope;
   const groupLabel = scope === 'all' && group !== 'all' ? SBU_GROUP_LABEL[group] : null;
+  const clusterTitle = group === 'all' ? 'Overall Cluster KPI' : `${SBU_GROUP_LABEL[group]} KPI`;
 
   const loadRollup = useCallback(async () => {
     setLoadingRollup(true);
@@ -195,7 +196,7 @@ export function DashboardHomeClient({
                 {scopedSbuName ?? groupLabel ?? 'Cluster rollup'}
               </p>
               <h1 className="font-display text-2xl uppercase tracking-wide text-ink">
-                {scopedSbuName ?? groupLabel ?? 'Trading Cluster Dashboard'}
+                {scopedSbuName ?? clusterTitle}
               </h1>
             </div>
           </div>
