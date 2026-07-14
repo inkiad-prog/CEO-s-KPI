@@ -1,0 +1,11 @@
+.env
+.env*.local
+node_modules/
+.next/
+tsconfig.tsbuildinfo
+*.log
+
+# AI assistant tooling (not part of the app)
+.agents/
+.claude/
+.codex/

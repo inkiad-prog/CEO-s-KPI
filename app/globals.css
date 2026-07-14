@@ -1,0 +1,95 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-anton), var(--font-inter), ui-sans-serif, sans-serif;
+  --font-mono: var(--font-ibm-plex-mono), ui-monospace, 'SF Mono', monospace;
+
+  /* Cream & navy — warm instrument-panel surface in the Akij wordmark's own blue */
+  --color-bg: #f7f2e7;
+  --color-surface: #fffdf8;
+  --color-surface-2: #f0e9d8;
+  --color-surface-3: #e6dcc6;
+  --color-line: #ddd0b3;
+  --color-line-soft: #e6dcc6;
+  --color-ink: #14202f;
+  --color-muted: #6b6355;
+  --color-muted-2: #6f6551;
+
+  --color-gold: #1b3a6b;
+  --color-gold-dark: #10263f;
+  --color-gold-dim: #b7c6da;
+  --color-on-gold: #ffffff;
+
+  --color-status-good: #1f7a4d;
+  --color-status-good-bg: rgba(31, 122, 77, 0.12);
+  --color-status-watch: #8a5009;
+  --color-status-watch-bg: rgba(138, 80, 9, 0.12);
+  --color-status-risk: #b23a22;
+  --color-status-risk-bg: rgba(178, 58, 34, 0.12);
+
+  --color-persp-financial: #1b3a6b;
+  --color-persp-customer: #1f7a63;
+  --color-persp-process: #4a5fc1;
+  --color-persp-growth: #7c4fa0;
+
+  /* The instrument dial: cream face, steel-navy bezel */
+  --color-dial-face: #fffdf8;
+  --color-dial-track: #e6dcc6;
+  --color-needle: #b23a22;
+  --color-bezel-hi: #f8f1de;
+  --color-bezel-lo: #0d2038;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  background-image:
+    radial-gradient(ellipse 1200px 700px at 50% -10%, rgba(27, 58, 107, 0.05), transparent 60%),
+    repeating-linear-gradient(0deg, rgba(16, 26, 44, 0.02) 0px, rgba(16, 26, 44, 0.02) 1px, transparent 1px, transparent 40px),
+    repeating-linear-gradient(90deg, rgba(16, 26, 44, 0.02) 0px, rgba(16, 26, 44, 0.02) 1px, transparent 1px, transparent 40px);
+  background-attachment: fixed;
+}
+
+::selection {
+  background: rgba(27, 58, 107, 0.18);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-surface-2);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 999px;
+  border: 3px solid var(--color-surface-2);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted-2);
+}
+
+/* Hide native number input spin buttons everywhere in the app. */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+}

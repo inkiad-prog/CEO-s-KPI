@@ -1,0 +1,20 @@
+ALTER TABLE kpis ADD COLUMN target_validation text;
+
+UPDATE kpis SET target_validation = 'Approved Annual Budget' WHERE sl = 1;
+UPDATE kpis SET target_validation = 'Approved Budget' WHERE sl = 2;
+UPDATE kpis SET target_validation = 'Collection Plan' WHERE sl = 3;
+UPDATE kpis SET target_validation = 'Approved Working Capital Plan' WHERE sl = 4;
+UPDATE kpis SET target_validation = 'Approved Funding Plan' WHERE sl = 5;
+UPDATE kpis SET target_validation = 'Approved Visit Plan' WHERE sl = 6;
+UPDATE kpis SET target_validation = 'Approved Sales Plan' WHERE sl = 7;
+UPDATE kpis SET target_validation = 'Approved Visit Schedule' WHERE sl = 8;
+UPDATE kpis SET target_validation = 'Approved Strategic Plan' WHERE sl = 9;
+UPDATE kpis SET target_validation = 'Approved Business Development Plan' WHERE sl = 10;
+UPDATE kpis SET target_validation = 'Approved Commercial Plan' WHERE sl = 11;
+UPDATE kpis SET target_validation = 'Approved Demand Plan' WHERE sl = 12;
+UPDATE kpis SET target_validation = 'Audit Action Plan' WHERE sl = 13;
+UPDATE kpis SET target_validation = 'Approved ERP Roadmap' WHERE sl = 14;
+UPDATE kpis SET target_validation = 'Approved Project Plan' WHERE sl = 15;
+UPDATE kpis SET target_validation = 'Approved Succession Plan' WHERE sl = 16;
+UPDATE kpis SET target_validation = 'Approved Engagement Plan' WHERE sl = 17;
+UPDATE kpis SET target_validation = 'Approved Organization Structure & PMS Calendar' WHERE sl = 18;
