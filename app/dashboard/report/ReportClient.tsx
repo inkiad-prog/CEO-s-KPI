@@ -188,9 +188,9 @@ export function ReportClient({
                       <p className="text-xs font-medium" style={{ color: PERSPECTIVE_COLOR[p] }}>
                         {p}
                       </p>
-                      <p className="mt-0.5 font-mono text-xs text-muted">
+                      <p className={`mt-0.5 font-mono text-xs ${s ? 'text-status-good' : 'text-muted'}`}>
                         {s
-                          ? `${s.submitted_by_enroll} · ${new Date(s.submitted_at).toLocaleString()}`
+                          ? `Submitted · ${s.submitted_by_enroll} · ${new Date(s.submitted_at).toLocaleString()}`
                           : 'Not submitted'}
                       </p>
                     </div>

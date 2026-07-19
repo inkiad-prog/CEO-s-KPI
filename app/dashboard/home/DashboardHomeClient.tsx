@@ -281,9 +281,11 @@ export function DashboardHomeClient({
                       />
                       {p.perspective}
                     </span>
-                    <span className="font-mono text-xs text-muted">
+                    <span
+                      className={`font-mono text-xs ${p.submitted ? 'text-status-good' : 'text-muted'}`}
+                    >
                       {p.submitted
-                        ? `${p.submittedByEnroll} · ${p.submittedAt ? new Date(p.submittedAt).toLocaleDateString() : ''}`
+                        ? `Submitted · ${p.submittedByEnroll} · ${p.submittedAt ? new Date(p.submittedAt).toLocaleDateString() : ''}`
                         : 'Not submitted'}
                     </span>
                   </div>
