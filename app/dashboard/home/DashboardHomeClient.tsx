@@ -248,7 +248,10 @@ export function DashboardHomeClient({
                         size={76}
                         color={PERSPECTIVE_COLOR[p.perspective]}
                       />
-                      <div className="mt-1.5 max-w-[100px] text-xs text-muted">
+                      <div
+                        className="mt-1.5 max-w-[100px] text-xs font-medium"
+                        style={{ color: PERSPECTIVE_COLOR[p.perspective] }}
+                      >
                         {p.perspective}
                       </div>
                     </div>
@@ -268,9 +271,15 @@ export function DashboardHomeClient({
                 {rollup.perspectiveStatus.map((p) => (
                   <div
                     key={p.perspective}
-                    className="flex items-center justify-between gap-3 rounded-md border border-line bg-surface px-4 py-2.5"
+                    className="flex items-center justify-between gap-3 rounded-md border border-line px-4 py-2.5"
+                    style={{
+                      background: `color-mix(in oklch, ${PERSPECTIVE_COLOR[p.perspective]} 7%, var(--color-surface))`,
+                    }}
                   >
-                    <span className="flex items-center gap-2 text-sm text-ink">
+                    <span
+                      className="flex items-center gap-2 text-sm font-medium"
+                      style={{ color: PERSPECTIVE_COLOR[p.perspective] }}
+                    >
                       <span
                         className="inline-block h-2 w-2 shrink-0 rounded-full"
                         style={{

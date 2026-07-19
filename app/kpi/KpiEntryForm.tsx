@@ -55,16 +55,14 @@ export function KpiEntryForm() {
           onSubmit={handleSubmit}
           className="rounded-lg border border-line bg-surface-2 p-8"
         >
-          <p className="text-sm text-muted">
-            Enter your enroll number, then choose the perspective and month you're reporting on.
-          </p>
-
-          <label
-            htmlFor="enroll"
-            className="mt-6 block text-sm font-medium text-ink"
-          >
-            Enroll number
-          </label>
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-gold font-mono text-[11px] font-semibold text-gold">
+              1
+            </span>
+            <label htmlFor="enroll" className="text-sm font-medium text-ink">
+              Enter your enroll number
+            </label>
+          </div>
           <input
             id="enroll"
             type="text"
@@ -91,12 +89,14 @@ export function KpiEntryForm() {
             </p>
           )}
 
-          <label
-            htmlFor="perspective"
-            className="mt-6 block text-sm font-medium text-ink"
-          >
-            Perspective
-          </label>
+          <div className="mt-6 flex items-center gap-2.5">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-gold font-mono text-[11px] font-semibold text-gold">
+              2
+            </span>
+            <label htmlFor="perspective" className="text-sm font-medium text-ink">
+              Choose the perspective you&rsquo;re reporting on
+            </label>
+          </div>
           <select
             id="perspective"
             required
@@ -114,12 +114,14 @@ export function KpiEntryForm() {
             ))}
           </select>
 
-          <label
-            htmlFor="month"
-            className="mt-6 block text-sm font-medium text-ink"
-          >
-            Reporting month
-          </label>
+          <div className="mt-6 flex items-center gap-2.5">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-gold font-mono text-[11px] font-semibold text-gold">
+              3
+            </span>
+            <label htmlFor="month" className="text-sm font-medium text-ink">
+              Choose the reporting month
+            </label>
+          </div>
           <select
             id="month"
             value={month}
