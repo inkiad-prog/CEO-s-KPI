@@ -21,15 +21,25 @@ export async function GET(req: NextRequest) {
   );
   const submission = submissionRows[0] ?? null;
 
+  // display_sl is the KPI's position across the whole trimmed 10-KPI set (ordered
+  // by sl), not its original master-sheet sl — keeps numbering sequential (1-10)
+  // and consistent with the Dashboard/Reports, which show all perspectives at once.
   const { rows: kpis } = await pool.query(
     `SELECT
-       k.id, k.sl, k.perspective, k.strategic_goal, k.name, k.weight_pct,
+       k.id, k.sl, k.display_sl, k.perspective, k.strategic_goal, k.name, k.weight_pct,
        k.direction, k.industry_benchmark, k.uom, k.target_validation, k.kpi_driver,
        k.measurement_criteria, k.frequency, k.required_evidence,
        e.target_value, e.achievement_value, e.achievement_pct, e.weighted_score,
        e.evidence_link, e.evidence_type, e.data_source, e.evidence_owner
-     FROM kpis k
-     JOIN kpi_simple_set s ON s.kpi_id = k.id
+     FROM (
+       SELECT
+         k.id, k.sl, k.perspective, k.strategic_goal, k.name, k.weight_pct,
+         k.direction, k.industry_benchmark, k.uom, k.target_validation, k.kpi_driver,
+         k.measurement_criteria, k.frequency, k.required_evidence,
+         ROW_NUMBER() OVER (ORDER BY k.sl) AS display_sl
+       FROM kpis k
+       JOIN kpi_simple_set s ON s.kpi_id = k.id
+     ) k
      LEFT JOIN kpi_entries_simple e
        ON e.kpi_id = k.id AND e.month = $2
      WHERE k.perspective = $1

@@ -14,6 +14,7 @@ export async function GET(req: NextRequest) {
        k.id, k.sl, k.perspective, k.name, k.weight_pct, k.direction, k.uom,
        g.target_value, g.is_locked, g.locked_by_enroll, g.locked_at
      FROM kpis k
+     JOIN kpi_simple_set s ON s.kpi_id = k.id
      LEFT JOIN kpi_cluster_goals g ON g.kpi_id = k.id AND g.month = $1
      ORDER BY k.sl`,
     [monthToDate(month)]

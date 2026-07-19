@@ -81,8 +81,8 @@ export function OverallReportClient({ enrollNumber }: { enrollNumber: string }) 
       'Entered By', 'Entered At',
     ];
 
-    const dataRows: Cell[][] = data.rows.map((r) => [
-      r.sl,
+    const dataRows: Cell[][] = data.rows.map((r, i) => [
+      i + 1,
       r.perspective,
       r.strategic_goal,
       r.name,
@@ -245,9 +245,9 @@ export function OverallReportClient({ enrollNumber }: { enrollNumber: string }) 
                   </tr>
                 </thead>
                 <tbody>
-                  {data.rows.map((r) => (
+                  {data.rows.map((r, i) => (
                     <tr key={r.kpi_id} className="border-b border-line-soft align-top">
-                      <td className="px-2 py-2 font-mono text-ink">{r.sl}</td>
+                      <td className="px-2 py-2 font-mono text-ink">{i + 1}</td>
                       <td className="px-2 py-2">
                         <span style={{ color: PERSPECTIVE_COLOR[r.perspective] }}>{r.perspective}</span>
                       </td>

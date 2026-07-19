@@ -72,8 +72,8 @@ export function ReportClient({
       'Evidence Owner', 'Entered By', 'Entered At',
     ];
 
-    const dataRows = rows.map((r) => [
-      r.sl,
+    const dataRows = rows.map((r, i) => [
+      i + 1,
       r.perspective,
       r.strategic_goal,
       r.name,
@@ -238,9 +238,9 @@ export function ReportClient({
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r) => (
+                {rows.map((r, i) => (
                   <tr key={r.sl} className="border-b border-line-soft align-top">
-                    <td className="px-2 py-2 font-mono text-ink">{r.sl}</td>
+                    <td className="px-2 py-2 font-mono text-ink">{i + 1}</td>
                     <td className="px-2 py-2">
                       <span style={{ color: PERSPECTIVE_COLOR[r.perspective] }}>
                         {r.perspective}

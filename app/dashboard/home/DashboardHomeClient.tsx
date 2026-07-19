@@ -53,7 +53,6 @@ export function DashboardHomeClient({
   enrollNumber: string;
 }) {
   const [month, setMonth] = useState(currentMonthValue);
-  const [view, setView] = useState<'summary' | 'full'>('full');
   const [rollup, setRollup] = useState<RollupResponse | null>(null);
   const [loadingRollup, setLoadingRollup] = useState(true);
   const [finalizing, setFinalizing] = useState(false);
@@ -124,6 +123,15 @@ export function DashboardHomeClient({
           </Link>
           <div className="flex items-center gap-3">
             <Link
+              href="/dashboard/goals"
+              className="group inline-flex items-center gap-1.5 rounded-full border border-gold-dim bg-gold/10 px-3.5 py-1.5 text-xs font-semibold text-gold transition-all duration-200 hover:border-gold hover:bg-gold/20 hover:shadow-[0_0_0_3px_rgba(27,58,107,0.14)]"
+            >
+              Overall KPI Goals
+              <span className="transition-transform duration-200 group-hover:translate-x-0.5">
+                →
+              </span>
+            </Link>
+            <Link
               href="/dashboard/overall-report"
               className="group inline-flex items-center gap-1.5 rounded-full border border-gold-dim bg-gold/10 px-3.5 py-1.5 text-xs font-semibold text-gold transition-all duration-200 hover:border-gold hover:bg-gold/20 hover:shadow-[0_0_0_3px_rgba(27,58,107,0.14)]"
             >
@@ -166,26 +174,6 @@ export function DashboardHomeClient({
                 ))}
               </select>
             </label>
-
-            <div className="flex flex-col gap-1.5 text-sm print:hidden">
-              <span className="font-medium text-ink">View</span>
-              <div className="flex overflow-hidden rounded-lg border border-line">
-                {(['summary', 'full'] as const).map((v) => (
-                  <button
-                    key={v}
-                    type="button"
-                    onClick={() => setView(v)}
-                    className={`px-4 py-2 text-sm font-medium capitalize transition-colors ${
-                      view === v
-                        ? 'bg-gold text-[color:var(--color-on-gold)]'
-                        : 'bg-surface-2 text-muted hover:text-ink'
-                    }`}
-                  >
-                    {v}
-                  </button>
-                ))}
-              </div>
-            </div>
 
             <button
               type="button"
@@ -305,16 +293,25 @@ export function DashboardHomeClient({
           </>
         )}
 
-        {view === 'full' && (
-          <section className="mb-8 rounded-lg border border-line bg-surface-2 p-6">
+        <section className="mb-8 rounded-lg border border-line bg-surface-2 p-6">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <h2 className="font-display text-xl text-ink">KPI detail — cluster</h2>
-              <Link
-                href={`/dashboard/report?month=${month}`}
-                className="text-sm text-gold transition-colors hover:text-gold-dark print:hidden"
-              >
-                Detailed report →
-              </Link>
+              <div className="flex items-center gap-4 print:hidden">
+                <button
+                  type="button"
+                  onClick={handleExportExcel}
+                  disabled={!rollup}
+                  className="rounded-lg bg-gold px-4 py-2 text-xs font-semibold text-[color:var(--color-on-gold)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Export to Excel
+                </button>
+                <Link
+                  href={`/dashboard/report?month=${month}`}
+                  className="text-sm text-gold transition-colors hover:text-gold-dark"
+                >
+                  Detailed report →
+                </Link>
+              </div>
             </div>
 
             {loadingRollup || !rollup ? (
@@ -337,14 +334,14 @@ export function DashboardHomeClient({
                     </tr>
                   </thead>
                   <tbody>
-                    {rollup.kpiTable.map((k) => (
+                    {rollup.kpiTable.map((k, i) => (
                       <tr key={k.kpiId} className="border-b border-line-soft">
                         <td className="py-2 pr-3 text-ink">
                           <span
                             className="mr-1.5 font-mono text-[10px]"
                             style={{ color: PERSPECTIVE_COLOR[k.perspective] }}
                           >
-                            {String(k.sl).padStart(2, '0')}
+                            {String(i + 1).padStart(2, '0')}
                           </span>
                           {k.name}
                         </td>
@@ -381,12 +378,16 @@ export function DashboardHomeClient({
                 </table>
               </div>
             )}
-          </section>
-        )}
+        </section>
 
         <section className="rounded-lg border border-line bg-surface-2 p-6">
           <div className="mb-1 flex items-baseline justify-between">
             <h2 className="font-display text-xl text-ink">Save this month</h2>
+            {rollup && (
+              <span className="font-mono text-xs text-muted">
+                {rollup.completion.perspectivesComplete}/{rollup.completion.totalPerspectives}
+              </span>
+            )}
           </div>
 
           {loadingRollup || !rollup ? (
@@ -419,16 +420,6 @@ export function DashboardHomeClient({
                     className="rounded-lg bg-gold px-5 py-2.5 text-sm font-semibold text-[color:var(--color-on-gold)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {finalizing ? 'Saving…' : 'Save and close'}
-                  </button>
-                )}
-
-                {rollup.finalized && (
-                  <button
-                    type="button"
-                    onClick={handleExportExcel}
-                    className="rounded-lg bg-gold px-5 py-2.5 text-sm font-semibold text-[color:var(--color-on-gold)] transition-opacity hover:opacity-90"
-                  >
-                    Export to Excel
                   </button>
                 )}
               </div>

@@ -20,6 +20,7 @@ import {
 type KpiRow = {
   id: number;
   sl: number;
+  display_sl: number;
   perspective: Perspective;
   strategic_goal: string;
   name: string;
@@ -245,7 +246,7 @@ export function KpiEntryBoxes({
                     className="inline-flex items-center rounded-full border border-line bg-surface px-2.5 py-0.5 font-mono text-[11px]"
                     style={{ color: perspColor }}
                   >
-                    SL {String(k.sl).padStart(2, '0')}
+                    SL {String(k.display_sl).padStart(2, '0')}
                   </span>
                   <span className="inline-flex items-center rounded-full border border-line bg-surface px-2.5 py-0.5 font-mono text-[11px] text-muted">
                     Weight {Number(k.weight_pct)}%
