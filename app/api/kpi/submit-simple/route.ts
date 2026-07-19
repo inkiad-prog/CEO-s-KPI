@@ -31,7 +31,10 @@ export async function POST(req: NextRequest) {
   }
 
   const { rows: kpis } = await pool.query(
-    `SELECT id, weight_pct, direction FROM kpis WHERE perspective = $1`,
+    `SELECT k.id, k.weight_pct, k.direction
+     FROM kpis k
+     JOIN kpi_simple_set s ON s.kpi_id = k.id
+     WHERE k.perspective = $1`,
     [perspective]
   );
 

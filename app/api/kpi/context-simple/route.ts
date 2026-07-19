@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
        e.target_value, e.achievement_value, e.achievement_pct, e.weighted_score,
        e.evidence_link, e.evidence_type, e.data_source, e.evidence_owner
      FROM kpis k
+     JOIN kpi_simple_set s ON s.kpi_id = k.id
      LEFT JOIN kpi_entries_simple e
        ON e.kpi_id = k.id AND e.month = $2
      WHERE k.perspective = $1

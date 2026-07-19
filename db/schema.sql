@@ -124,3 +124,10 @@ CREATE TABLE kpi_entries_simple (
 
 CREATE INDEX idx_kpi_entries_simple_month ON kpi_entries_simple(month);
 CREATE INDEX idx_kpi_submissions_simple_month ON kpi_submissions_simple(month);
+
+-- Allowlist of which kpis rows the simplified flow shows — a trimmed subset of the
+-- full 18-KPI catalog. Kept as a separate join table (not a column on kpis, not a
+-- delete) so main's full KPI list is completely unaffected.
+CREATE TABLE kpi_simple_set (
+  kpi_id int PRIMARY KEY REFERENCES kpis(id)
+);
