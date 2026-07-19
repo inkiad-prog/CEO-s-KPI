@@ -27,20 +27,19 @@ type KpiRow = {
   direction: Direction;
   industry_benchmark: string;
   uom: string;
+  target_validation: string;
   kpi_driver: string;
   measurement_criteria: string;
-  data_source: string;
   frequency: string;
-  evidence_type: string;
-  evidence_link_label: string;
   required_evidence: string;
-  capturing_method: string;
   target_value: string | null;
   achievement_value: string | null;
   achievement_pct: string | null;
   weighted_score: string | null;
   evidence_link: string | null;
-  evidence_note: string | null;
+  evidence_type: string | null;
+  data_source: string | null;
+  evidence_owner: string | null;
 };
 
 type ContextResponse = {
@@ -53,19 +52,26 @@ type Draft = {
   targetValue: string;
   achievementValue: string;
   evidenceLink: string;
-  evidenceNote: string;
+  evidenceType: string;
+  dataSource: string;
+  evidenceOwner: string;
+};
+
+const emptyDraft: Draft = {
+  targetValue: '',
+  achievementValue: '',
+  evidenceLink: '',
+  evidenceType: '',
+  dataSource: '',
+  evidenceOwner: '',
 };
 
 export function KpiEntryBoxes({
-  role,
-  sbuId,
-  sbuName,
+  perspective,
   month,
   enrollNumber,
 }: {
-  role: string;
-  sbuId: string;
-  sbuName: string;
+  perspective: Perspective;
   month: string;
   enrollNumber: string;
 }) {
@@ -78,7 +84,7 @@ export function KpiEntryBoxes({
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/kpi/context?role=${encodeURIComponent(role)}&sbuId=${sbuId}&month=${month}`)
+    fetch(`/api/kpi/context-simple?perspective=${encodeURIComponent(perspective)}&month=${month}`)
       .then((res) => res.json())
       .then((json: ContextResponse) => {
         setData(json);
@@ -88,22 +94,24 @@ export function KpiEntryBoxes({
             targetValue: k.target_value ?? '',
             achievementValue: k.achievement_value ?? '',
             evidenceLink: k.evidence_link ?? '',
-            evidenceNote: k.evidence_note ?? '',
+            evidenceType: k.evidence_type ?? '',
+            dataSource: k.data_source ?? '',
+            evidenceOwner: k.evidence_owner ?? '',
           };
         }
         setDrafts(nextDrafts);
         setLoading(false);
       });
-  }, [role, sbuId, month]);
-
-  const emptyDraft: Draft = { targetValue: '', achievementValue: '', evidenceLink: '', evidenceNote: '' };
+  }, [perspective, month]);
 
   function missingFields(draft: Draft) {
     return {
       targetValue: draft.targetValue === '' || !Number.isFinite(Number(draft.targetValue)),
       achievementValue: draft.achievementValue === '' || !Number.isFinite(Number(draft.achievementValue)),
       evidenceLink: draft.evidenceLink.trim() === '',
-      evidenceNote: draft.evidenceNote.trim() === '',
+      evidenceType: draft.evidenceType.trim() === '',
+      dataSource: draft.dataSource.trim() === '',
+      evidenceOwner: draft.evidenceOwner.trim() === '',
     };
   }
 
@@ -113,7 +121,7 @@ export function KpiEntryBoxes({
         ? data.kpis.every((k) => {
             const d = drafts[k.id] ?? emptyDraft;
             const missing = missingFields(d);
-            return !missing.targetValue && !missing.achievementValue && !missing.evidenceLink && !missing.evidenceNote;
+            return Object.values(missing).every((v) => !v);
           })
         : false,
     [data, drafts]
@@ -137,12 +145,14 @@ export function KpiEntryBoxes({
       targetValue: Number(drafts[k.id]?.targetValue),
       achievementValue: Number(drafts[k.id]?.achievementValue),
       evidenceLink: drafts[k.id]?.evidenceLink ?? '',
-      evidenceNote: drafts[k.id]?.evidenceNote ?? '',
+      evidenceType: drafts[k.id]?.evidenceType ?? '',
+      dataSource: drafts[k.id]?.dataSource ?? '',
+      evidenceOwner: drafts[k.id]?.evidenceOwner ?? '',
     }));
-    const res = await fetch('/api/kpi/submit', {
+    const res = await fetch('/api/kpi/submit-simple', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ role, sbuId, month, enrollNumber, entries }),
+      body: JSON.stringify({ perspective, month, enrollNumber, entries }),
     });
     const json = await res.json();
     setSubmitting(false);
@@ -151,10 +161,12 @@ export function KpiEntryBoxes({
       return;
     }
     const refreshed = await fetch(
-      `/api/kpi/context?role=${encodeURIComponent(role)}&sbuId=${sbuId}&month=${month}`
+      `/api/kpi/context-simple?perspective=${encodeURIComponent(perspective)}&month=${month}`
     ).then((r) => r.json());
     setData(refreshed);
   }
+
+  const perspColor = PERSPECTIVE_COLOR[perspective];
 
   return (
     <main className="min-h-screen bg-bg px-6 py-10">
@@ -174,11 +186,14 @@ export function KpiEntryBoxes({
         <div className="mb-8 flex items-center gap-4 border-b border-line pb-6">
           <BrandMark />
           <div>
-            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-gold">
+            <p
+              className="font-mono text-[11px] uppercase tracking-[0.2em]"
+              style={{ color: perspColor }}
+            >
               {monthLabel(month)}
             </p>
             <h1 className="font-display text-2xl uppercase tracking-wide text-ink">
-              {role} · {sbuName}
+              {perspective}
             </h1>
           </div>
         </div>
@@ -209,12 +224,7 @@ export function KpiEntryBoxes({
 
         <div className="space-y-5">
           {data?.kpis.map((k) => {
-            const draft = drafts[k.id] ?? {
-              targetValue: '',
-              achievementValue: '',
-              evidenceLink: '',
-              evidenceNote: '',
-            };
+            const draft = drafts[k.id] ?? emptyDraft;
             const target = Number(draft.targetValue);
             const actual = Number(draft.achievementValue);
             const livePct =
@@ -223,7 +233,6 @@ export function KpiEntryBoxes({
                 : data.locked && k.achievement_pct !== null
                   ? Number(k.achievement_pct)
                   : null;
-            const perspColor = PERSPECTIVE_COLOR[k.perspective];
             const missing = attemptedSubmit && !data.locked ? missingFields(draft) : null;
 
             return (
@@ -231,211 +240,290 @@ export function KpiEntryBoxes({
                 key={k.id}
                 className="rounded-lg border border-line bg-surface-2 p-6"
               >
-                <div>
-                  <div className="mb-1.5 flex items-center gap-2">
-                      <span
-                        className="inline-flex items-center rounded-full border border-line bg-surface px-2.5 py-0.5 font-mono text-[11px]"
-                        style={{ color: perspColor }}
-                      >
-                        SL {String(k.sl).padStart(2, '0')} · {k.perspective}
+                <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                  <span
+                    className="inline-flex items-center rounded-full border border-line bg-surface px-2.5 py-0.5 font-mono text-[11px]"
+                    style={{ color: perspColor }}
+                  >
+                    SL {String(k.sl).padStart(2, '0')}
+                  </span>
+                  <span className="font-mono text-[11px] text-muted">
+                    Weight {Number(k.weight_pct)}%
+                  </span>
+                  <span className="font-mono text-[11px] text-muted">
+                    {k.direction === 'higher_better' ? 'Higher better' : 'Lower better'}
+                  </span>
+                  {k.industry_benchmark && (
+                    <span className="font-mono text-[11px] text-muted">
+                      Benchmark: {k.industry_benchmark}
+                    </span>
+                  )}
+                </div>
+
+                <p className="text-xs text-muted">{k.strategic_goal}</p>
+                <h2 className="mt-1 font-display text-lg text-ink">{k.name}</h2>
+                {k.measurement_criteria && (
+                  <p className="mt-1 font-mono text-[11px] leading-relaxed text-muted-2">
+                    {k.measurement_criteria}
+                  </p>
+                )}
+                {(k.kpi_driver || k.frequency) && (
+                  <p className="mt-1 text-[11px] text-muted">
+                    {[k.kpi_driver, k.frequency].filter(Boolean).join(' · ')}
+                  </p>
+                )}
+
+                {/* Target + Achievement + live % */}
+                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  <div>
+                    <span className="block text-[10px] font-semibold uppercase tracking-wide text-gold">
+                      Target validation
+                    </span>
+                    <label
+                      htmlFor={`target-${k.id}`}
+                      className="block text-xs text-muted"
+                    >
+                      {k.target_validation || 'Target'} <span className="text-status-risk">*</span>
+                    </label>
+                    {data.locked ? (
+                      <span className="mt-0.5 block font-mono text-base font-semibold text-ink">
+                        {k.target_value} {k.uom}
                       </span>
-                      <span className="font-mono text-[11px] text-muted">
-                        Weight {Number(k.weight_pct)}%
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted">{k.strategic_goal}</p>
-                    <h2 className="mt-1 font-display text-lg text-ink">
-                      {k.name}
-                    </h2>
-                    <p className="mt-1 font-mono text-[11px] leading-relaxed text-muted-2">
-                      {k.measurement_criteria}
-                    </p>
-                    {k.industry_benchmark && (
-                      <p className="mt-1 text-[11px] text-muted">
-                        Benchmark: {k.industry_benchmark}
-                      </p>
+                    ) : (
+                      <>
+                        <div className="relative mt-1">
+                          <input
+                            id={`target-${k.id}`}
+                            type="number"
+                            step="any"
+                            value={draft.targetValue}
+                            onChange={(e) =>
+                              updateDraft(k.id, { targetValue: e.target.value })
+                            }
+                            onWheel={(e) => e.currentTarget.blur()}
+                            placeholder={examplePlaceholder(k.uom)}
+                            aria-invalid={missing?.targetValue ? true : undefined}
+                            className={`w-full rounded-lg border bg-surface py-1.5 pl-2.5 pr-12 font-mono text-base font-semibold text-ink outline-none focus:border-gold ${
+                              missing?.targetValue ? 'border-status-risk' : 'border-line'
+                            }`}
+                          />
+                          <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-xs text-muted">
+                            {k.uom}
+                          </span>
+                        </div>
+                        {missing?.targetValue && (
+                          <p className="mt-1 flex items-center gap-1 text-[11px] text-status-risk">
+                            <WarningIcon className="h-3 w-3 shrink-0" />
+                            Required
+                          </p>
+                        )}
+                      </>
                     )}
+                  </div>
 
-                    <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                      <div>
-                        <label
-                          htmlFor={`target-${k.id}`}
-                          className="block text-xs text-muted"
-                        >
-                          Target ({k.uom} ·{' '}
-                          {k.direction === 'higher_better'
-                            ? 'higher better'
-                            : 'lower better'}
-                          ) <span className="text-status-risk">*</span>
-                        </label>
-                        {data.locked ? (
-                          <span className="mt-0.5 block font-mono text-base font-semibold text-ink">
-                            {k.target_value} {k.uom}
+                  <div>
+                    <label
+                      htmlFor={`achievement-${k.id}`}
+                      className="block text-xs text-muted"
+                    >
+                      Achievement ({k.uom}) <span className="text-status-risk">*</span>
+                    </label>
+                    {data.locked ? (
+                      <span className="mt-0.5 block font-mono text-base font-semibold text-ink">
+                        {k.achievement_value} {k.uom}
+                      </span>
+                    ) : (
+                      <>
+                        <div className="relative mt-1">
+                          <input
+                            id={`achievement-${k.id}`}
+                            type="number"
+                            step="any"
+                            value={draft.achievementValue}
+                            onChange={(e) =>
+                              updateDraft(k.id, { achievementValue: e.target.value })
+                            }
+                            onWheel={(e) => e.currentTarget.blur()}
+                            placeholder={examplePlaceholder(k.uom)}
+                            aria-invalid={missing?.achievementValue ? true : undefined}
+                            className={`w-full rounded-lg border bg-surface py-1.5 pl-2.5 pr-12 font-mono text-base font-semibold text-ink outline-none focus:border-gold ${
+                              missing?.achievementValue ? 'border-status-risk' : 'border-line'
+                            }`}
+                          />
+                          <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-xs text-muted">
+                            {k.uom}
                           </span>
-                        ) : (
-                          <>
-                            <div className="relative mt-1">
-                              <input
-                                id={`target-${k.id}`}
-                                type="number"
-                                step="any"
-                                value={draft.targetValue}
-                                onChange={(e) =>
-                                  updateDraft(k.id, { targetValue: e.target.value })
-                                }
-                                onWheel={(e) => e.currentTarget.blur()}
-                                placeholder={examplePlaceholder(k.uom)}
-                                aria-invalid={missing?.targetValue ? true : undefined}
-                                className={`w-full rounded-lg border bg-surface py-1.5 pl-2.5 pr-12 font-mono text-base font-semibold text-ink outline-none focus:border-gold ${
-                                  missing?.targetValue ? 'border-status-risk' : 'border-line'
-                                }`}
-                              />
-                              <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-xs text-muted">
-                                {k.uom}
-                              </span>
-                            </div>
-                            {missing?.targetValue && (
-                              <p className="mt-1 flex items-center gap-1 text-[11px] text-status-risk">
-                                <WarningIcon className="h-3 w-3 shrink-0" />
-                                Required
-                              </p>
-                            )}
-                          </>
-                        )}
-                      </div>
-                      <div>
-                        <label
-                          htmlFor={`achievement-${k.id}`}
-                          className="block text-xs text-muted"
-                        >
-                          Achievement ({k.uom}) <span className="text-status-risk">*</span>
-                        </label>
-                        {data.locked ? (
-                          <span className="mt-0.5 block font-mono text-base font-semibold text-ink">
-                            {k.achievement_value} {k.uom}
-                          </span>
-                        ) : (
-                          <>
-                            <div className="relative mt-1">
-                              <input
-                                id={`achievement-${k.id}`}
-                                type="number"
-                                step="any"
-                                value={draft.achievementValue}
-                                onChange={(e) =>
-                                  updateDraft(k.id, { achievementValue: e.target.value })
-                                }
-                                onWheel={(e) => e.currentTarget.blur()}
-                                placeholder={examplePlaceholder(k.uom)}
-                                aria-invalid={missing?.achievementValue ? true : undefined}
-                                className={`w-full rounded-lg border bg-surface py-1.5 pl-2.5 pr-12 font-mono text-base font-semibold text-ink outline-none focus:border-gold ${
-                                  missing?.achievementValue ? 'border-status-risk' : 'border-line'
-                                }`}
-                              />
-                              <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-xs text-muted">
-                                {k.uom}
-                              </span>
-                            </div>
-                            {missing?.achievementValue && (
-                              <p className="mt-1 flex items-center gap-1 text-[11px] text-status-risk">
-                                <WarningIcon className="h-3 w-3 shrink-0" />
-                                Required
-                              </p>
-                            )}
-                          </>
-                        )}
-                      </div>
-                      <div>
-                        <span className="block text-xs text-muted">
-                          Achievement %
-                        </span>
-                        <span
-                          className="mt-0.5 flex items-center gap-1.5 font-mono text-base font-semibold"
-                          style={{ color: STATUS_COLOR[statusTier(livePct)] }}
-                        >
-                          <StatusDot pct={livePct} />
-                          {livePct !== null ? `${livePct.toFixed(1)}%` : '—'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                      <div>
-                        <label
-                          htmlFor={`evidence-link-${k.id}`}
-                          className="block text-xs text-muted"
-                        >
-                          Evidence link / data source <span className="text-status-risk">*</span>
-                        </label>
-                        {data.locked ? (
-                          <p className="mt-1 break-words text-sm text-muted">
-                            {k.evidence_link || '—'}
+                        </div>
+                        {missing?.achievementValue && (
+                          <p className="mt-1 flex items-center gap-1 text-[11px] text-status-risk">
+                            <WarningIcon className="h-3 w-3 shrink-0" />
+                            Required
                           </p>
-                        ) : (
-                          <>
-                            <input
-                              id={`evidence-link-${k.id}`}
-                              type="text"
-                              value={draft.evidenceLink}
-                              onChange={(e) =>
-                                updateDraft(k.id, { evidenceLink: e.target.value })
-                              }
-                              placeholder={`${k.data_source} — ${k.evidence_type}`}
-                              aria-invalid={missing?.evidenceLink ? true : undefined}
-                              className={`mt-1 w-full rounded-lg border bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-gold ${
-                                missing?.evidenceLink ? 'border-status-risk' : 'border-line'
-                              }`}
-                            />
-                            {missing?.evidenceLink && (
-                              <p className="mt-1 flex items-center gap-1 text-[11px] text-status-risk">
-                                <WarningIcon className="h-3 w-3 shrink-0" />
-                                Required
-                              </p>
-                            )}
-                          </>
                         )}
-                      </div>
-                      <div>
-                        <label
-                          htmlFor={`evidence-note-${k.id}`}
-                          className="block text-xs text-muted"
-                        >
-                          Evidence note <span className="text-status-risk">*</span>
-                        </label>
-                        {data.locked ? (
-                          <p className="mt-1 break-words text-sm text-muted">
-                            {k.evidence_note || '—'}
-                          </p>
-                        ) : (
-                          <>
-                            <input
-                              id={`evidence-note-${k.id}`}
-                              type="text"
-                              value={draft.evidenceNote}
-                              onChange={(e) =>
-                                updateDraft(k.id, { evidenceNote: e.target.value })
-                              }
-                              placeholder={k.required_evidence}
-                              aria-invalid={missing?.evidenceNote ? true : undefined}
-                              className={`mt-1 w-full rounded-lg border bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-gold ${
-                                missing?.evidenceNote ? 'border-status-risk' : 'border-line'
-                              }`}
-                            />
-                            {missing?.evidenceNote && (
-                              <p className="mt-1 flex items-center gap-1 text-[11px] text-status-risk">
-                                <WarningIcon className="h-3 w-3 shrink-0" />
-                                Required
-                              </p>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
+                      </>
+                    )}
+                  </div>
 
-                    <p className="mt-3 text-[11px] text-muted-2">
-                      {k.frequency} · {k.capturing_method} · required
-                      evidence: {k.required_evidence}
-                    </p>
+                  <div>
+                    <span className="block text-xs text-muted">Achievement %</span>
+                    <span
+                      className="mt-0.5 flex items-center gap-1.5 font-mono text-base font-semibold"
+                      style={{ color: STATUS_COLOR[statusTier(livePct)] }}
+                    >
+                      <StatusDot pct={livePct} />
+                      {livePct !== null ? `${livePct.toFixed(1)}%` : '—'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Evidence + evidence type + data source + evidence owner */}
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <span className="block text-[10px] font-semibold uppercase tracking-wide text-gold">
+                      Required evidence
+                    </span>
+                    <label
+                      htmlFor={`evidence-${k.id}`}
+                      className="block text-xs text-muted"
+                    >
+                      {k.required_evidence || 'Evidence'} <span className="text-status-risk">*</span>
+                    </label>
+                    {data.locked ? (
+                      <p className="mt-1 break-words text-sm text-muted">
+                        {k.evidence_link || '—'}
+                      </p>
+                    ) : (
+                      <>
+                        <input
+                          id={`evidence-${k.id}`}
+                          type="text"
+                          value={draft.evidenceLink}
+                          onChange={(e) =>
+                            updateDraft(k.id, { evidenceLink: e.target.value })
+                          }
+                          placeholder="Link or reference to the evidence"
+                          aria-invalid={missing?.evidenceLink ? true : undefined}
+                          className={`mt-1 w-full rounded-lg border bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-gold ${
+                            missing?.evidenceLink ? 'border-status-risk' : 'border-line'
+                          }`}
+                        />
+                        {missing?.evidenceLink && (
+                          <p className="mt-1 flex items-center gap-1 text-[11px] text-status-risk">
+                            <WarningIcon className="h-3 w-3 shrink-0" />
+                            Required
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor={`evidence-type-${k.id}`}
+                      className="block text-xs text-muted"
+                    >
+                      Evidence type <span className="text-status-risk">*</span>
+                    </label>
+                    {data.locked ? (
+                      <p className="mt-1 break-words text-sm text-muted">
+                        {k.evidence_type || '—'}
+                      </p>
+                    ) : (
+                      <>
+                        <input
+                          id={`evidence-type-${k.id}`}
+                          type="text"
+                          value={draft.evidenceType}
+                          onChange={(e) =>
+                            updateDraft(k.id, { evidenceType: e.target.value })
+                          }
+                          placeholder="e.g. Report, Document, Dashboard"
+                          aria-invalid={missing?.evidenceType ? true : undefined}
+                          className={`mt-1 w-full rounded-lg border bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-gold ${
+                            missing?.evidenceType ? 'border-status-risk' : 'border-line'
+                          }`}
+                        />
+                        {missing?.evidenceType && (
+                          <p className="mt-1 flex items-center gap-1 text-[11px] text-status-risk">
+                            <WarningIcon className="h-3 w-3 shrink-0" />
+                            Required
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor={`data-source-${k.id}`}
+                      className="block text-xs text-muted"
+                    >
+                      Data source <span className="text-status-risk">*</span>
+                    </label>
+                    {data.locked ? (
+                      <p className="mt-1 break-words text-sm text-muted">
+                        {k.data_source || '—'}
+                      </p>
+                    ) : (
+                      <>
+                        <input
+                          id={`data-source-${k.id}`}
+                          type="text"
+                          value={draft.dataSource}
+                          onChange={(e) =>
+                            updateDraft(k.id, { dataSource: e.target.value })
+                          }
+                          placeholder="e.g. ERP/MIS/Finance Report"
+                          aria-invalid={missing?.dataSource ? true : undefined}
+                          className={`mt-1 w-full rounded-lg border bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-gold ${
+                            missing?.dataSource ? 'border-status-risk' : 'border-line'
+                          }`}
+                        />
+                        {missing?.dataSource && (
+                          <p className="mt-1 flex items-center gap-1 text-[11px] text-status-risk">
+                            <WarningIcon className="h-3 w-3 shrink-0" />
+                            Required
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor={`evidence-owner-${k.id}`}
+                      className="block text-xs text-muted"
+                    >
+                      Evidence owner <span className="text-status-risk">*</span>
+                    </label>
+                    {data.locked ? (
+                      <p className="mt-1 break-words text-sm text-muted">
+                        {k.evidence_owner || '—'}
+                      </p>
+                    ) : (
+                      <>
+                        <input
+                          id={`evidence-owner-${k.id}`}
+                          type="text"
+                          value={draft.evidenceOwner}
+                          onChange={(e) =>
+                            updateDraft(k.id, { evidenceOwner: e.target.value })
+                          }
+                          placeholder="Who owns this evidence"
+                          aria-invalid={missing?.evidenceOwner ? true : undefined}
+                          className={`mt-1 w-full rounded-lg border bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-gold ${
+                            missing?.evidenceOwner ? 'border-status-risk' : 'border-line'
+                          }`}
+                        />
+                        {missing?.evidenceOwner && (
+                          <p className="mt-1 flex items-center gap-1 text-[11px] text-status-risk">
+                            <WarningIcon className="h-3 w-3 shrink-0" />
+                            Required
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             );

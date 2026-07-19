@@ -5,13 +5,21 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BrandMark } from '@/components/BrandMark';
 import { WarningIcon } from '@/components/icons';
-import { ENROLL_HINT, PERSPECTIVES, isValidEnroll, type Perspective } from '@/lib/kpi';
+import {
+  ENROLL_HINT,
+  MONTHS,
+  PERSPECTIVES,
+  currentMonthValue,
+  isValidEnroll,
+  type Perspective,
+} from '@/lib/kpi';
 
 export function KpiEntryForm() {
   const router = useRouter();
   const [enrollNumber, setEnrollNumber] = useState('');
   const [enrollError, setEnrollError] = useState<string | null>(null);
   const [perspective, setPerspective] = useState<Perspective | ''>('');
+  const [month, setMonth] = useState(currentMonthValue);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -19,7 +27,7 @@ export function KpiEntryForm() {
       setEnrollError(ENROLL_HINT);
       return;
     }
-    const params = new URLSearchParams({ enroll: enrollNumber, perspective });
+    const params = new URLSearchParams({ enroll: enrollNumber, perspective, month });
     router.push(`/kpi/entry?${params.toString()}`);
   }
 
@@ -48,7 +56,7 @@ export function KpiEntryForm() {
           className="rounded-lg border border-line bg-surface-2 p-8"
         >
           <p className="text-sm text-muted">
-            Enter your enroll number and choose the perspective you're reporting on.
+            Enter your enroll number, then choose the perspective and month you're reporting on.
           </p>
 
           <label
@@ -102,6 +110,25 @@ export function KpiEntryForm() {
             {PERSPECTIVES.map((p) => (
               <option key={p} value={p}>
                 {p}
+              </option>
+            ))}
+          </select>
+
+          <label
+            htmlFor="month"
+            className="mt-6 block text-sm font-medium text-ink"
+          >
+            Reporting month
+          </label>
+          <select
+            id="month"
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+            className="mt-2 w-full rounded-lg border border-line bg-surface px-4 py-2.5 text-ink outline-none focus:border-gold"
+          >
+            {MONTHS.map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.label}
               </option>
             ))}
           </select>

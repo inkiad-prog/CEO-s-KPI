@@ -91,3 +91,36 @@ CREATE TABLE dashboard_admins (
 CREATE INDEX idx_kpi_cluster_goals_month ON kpi_cluster_goals(month);
 CREATE INDEX idx_kpi_entries_month ON kpi_entries(month);
 CREATE INDEX idx_kpi_submissions_month ON kpi_submissions(month);
+
+-- Simplified system (branch: simplified): one submission per perspective per month, cluster-wide (no SBU).
+-- Kept fully separate from kpi_submissions/kpi_entries above so the original per-SBU flow is untouched.
+CREATE TABLE kpi_submissions_simple (
+  id                  serial PRIMARY KEY,
+  perspective         text NOT NULL CHECK (perspective IN ('Financial', 'Customer', 'Internal Process', 'Learning & Growth')),
+  month               date NOT NULL,
+  submitted_by_enroll text NOT NULL,
+  submitted_at        timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (perspective, month)
+);
+
+CREATE TABLE kpi_entries_simple (
+  id                serial PRIMARY KEY,
+  kpi_id            int NOT NULL REFERENCES kpis(id),
+  month             date NOT NULL,
+  submission_id     int REFERENCES kpi_submissions_simple(id),
+  target_value      numeric,
+  achievement_value numeric,
+  achievement_pct   numeric,
+  weighted_score    numeric,
+  evidence_link     text,
+  evidence_type     text,
+  data_source       text,
+  evidence_owner    text,
+  entered_by_enroll text,
+  entered_at        timestamptz NOT NULL DEFAULT now(),
+  updated_at        timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (kpi_id, month)
+);
+
+CREATE INDEX idx_kpi_entries_simple_month ON kpi_entries_simple(month);
+CREATE INDEX idx_kpi_submissions_simple_month ON kpi_submissions_simple(month);

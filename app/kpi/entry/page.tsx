@@ -1,19 +1,18 @@
-import { pool } from '@/lib/db';
 import { KpiEntryBoxes } from './KpiEntryBoxes';
+import type { Perspective } from '@/lib/kpi';
 
 export default async function KpiEntryPage({
   searchParams,
 }: {
   searchParams: Promise<{
-    role?: string;
-    sbuId?: string;
+    perspective?: string;
     month?: string;
     enroll?: string;
   }>;
 }) {
-  const { role, sbuId, month, enroll } = await searchParams;
+  const { perspective, month, enroll } = await searchParams;
 
-  if (!role || !sbuId || !month || !enroll) {
+  if (!perspective || !month || !enroll) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-bg px-6">
         <p className="text-sm text-muted">
@@ -27,17 +26,9 @@ export default async function KpiEntryPage({
     );
   }
 
-  const { rows } = await pool.query<{ name: string }>(
-    'SELECT name FROM sbus WHERE id = $1',
-    [sbuId]
-  );
-  const sbuName = rows[0]?.name ?? 'Unknown SBU';
-
   return (
     <KpiEntryBoxes
-      role={role}
-      sbuId={sbuId}
-      sbuName={sbuName}
+      perspective={perspective as Perspective}
       month={month}
       enrollNumber={enroll}
     />
