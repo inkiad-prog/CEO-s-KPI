@@ -135,10 +135,9 @@ export function GoalsClient({ enrollNumber }: { enrollNumber: string }) {
 
         <p className="mb-6 text-sm text-muted">
           Set the cluster-wide target — the &ldquo;Overall KPI Goal&rdquo;
-          &mdash; for each KPI this month. This is a single benchmark for the
-          whole cluster; it is shown alongside the bottom-up sum of every
-          SBU&rsquo;s own respondent-entered targets on the Dashboard, and
-          does not block or prefill KPI entry.
+          &mdash; for each KPI this month. This is a reference benchmark
+          alongside the figures respondents enter directly on the Dashboard,
+          and it does not block or prefill KPI entry.
         </p>
 
         {message && (
