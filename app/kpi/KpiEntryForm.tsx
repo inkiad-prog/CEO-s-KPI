@@ -5,10 +5,17 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BrandMark } from '@/components/BrandMark';
 import { WarningIcon } from '@/components/icons';
-import { ENROLL_HINT, isValidEnroll } from '@/lib/kpi';
+import { ENROLL_HINT, MONTHS, ROLES, currentMonthValue, isValidEnroll, type Role } from '@/lib/kpi';
 
-export function KpiEntryForm() {
+export function KpiEntryForm({
+  sbus,
+}: {
+  sbus: { id: number; name: string }[];
+}) {
   const router = useRouter();
+  const [role, setRole] = useState<Role | ''>('');
+  const [sbuId, setSbuId] = useState('');
+  const [month, setMonth] = useState(currentMonthValue);
   const [enrollNumber, setEnrollNumber] = useState('');
   const [enrollError, setEnrollError] = useState<string | null>(null);
 
@@ -18,13 +25,18 @@ export function KpiEntryForm() {
       setEnrollError(ENROLL_HINT);
       return;
     }
-    const params = new URLSearchParams({ enroll: enrollNumber });
+    const params = new URLSearchParams({
+      role,
+      sbuId,
+      month,
+      enroll: enrollNumber,
+    });
     router.push(`/kpi/entry?${params.toString()}`);
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-bg px-6">
-      <div className="w-full max-w-sm">
+    <main className="min-h-screen bg-bg px-6 py-12">
+      <div className="mx-auto w-full max-w-lg">
         <Link
           href="/"
           className="mb-6 inline-block text-sm text-muted transition-colors hover:text-gold"
@@ -32,59 +44,130 @@ export function KpiEntryForm() {
           ← Back
         </Link>
 
-        <div className="mb-6 flex flex-col items-center text-center">
+        <div className="flex items-center gap-4">
           <BrandMark size="md" />
-          <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.2em] text-gold">
-            KPI intake
-          </p>
-          <h1 className="mt-1 font-display text-2xl uppercase tracking-wide text-ink">
-            Enter KPI
-          </h1>
+          <div>
+            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-gold">
+              KPI intake
+            </p>
+            <h1 className="font-display text-3xl uppercase tracking-wide text-ink">
+              Enter KPI
+            </h1>
+          </div>
         </div>
+        <p className="mt-4 text-sm text-muted">
+          Select your SBU and function, then the reporting period.
+        </p>
 
         <form
           onSubmit={handleSubmit}
-          className="rounded-lg border border-line bg-surface-2 p-8"
+          className="mt-8 rounded-lg border border-line bg-surface-2 p-6"
         >
-          <p className="text-sm text-muted">
-            Enter your enroll number to continue.
-          </p>
+          <label
+            htmlFor="sbu"
+            className="mb-2 block text-xs font-medium text-muted"
+          >
+            1 · Select your SBU
+          </label>
+          <select
+            id="sbu"
+            required
+            value={sbuId}
+            onChange={(e) => setSbuId(e.target.value)}
+            className="w-full rounded-lg border border-line bg-surface px-4 py-2.5 text-ink outline-none focus:border-gold"
+          >
+            <option value="" disabled>
+              Choose an SBU…
+            </option>
+            {sbus.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
 
           <label
-            htmlFor="enroll"
-            className="mt-6 block text-sm font-medium text-ink"
+            htmlFor="role"
+            className="mb-2 mt-6 block text-xs font-medium text-muted"
           >
-            Enroll number
+            2 · Select your function
           </label>
-          <input
-            id="enroll"
-            type="text"
-            inputMode="numeric"
-            autoComplete="off"
-            maxLength={6}
-            value={enrollNumber}
-            onChange={(e) => {
-              setEnrollNumber(e.target.value.replace(/\D/g, '').slice(0, 6));
-              setEnrollError(null);
-            }}
-            aria-invalid={enrollError ? true : undefined}
-            className={`mt-2 w-full rounded-lg border bg-surface px-4 py-2.5 font-mono text-ink outline-none transition-colors focus:border-gold ${
-              enrollError ? 'border-status-risk' : 'border-line'
-            }`}
-            placeholder="e.g. 512345"
+          <select
+            id="role"
             required
-          />
+            value={role}
+            onChange={(e) => setRole(e.target.value as Role)}
+            className="w-full rounded-lg border border-line bg-surface px-4 py-2.5 text-ink outline-none focus:border-gold"
+          >
+            <option value="" disabled>
+              Choose a function…
+            </option>
+            {ROLES.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
 
-          {enrollError && (
-            <p role="alert" className="mt-3 flex items-center gap-1.5 text-sm text-status-risk">
-              <WarningIcon className="h-4 w-4 shrink-0" />
-              {enrollError}
-            </p>
-          )}
+          <div className="mt-5 grid grid-cols-2 gap-4">
+            <div>
+              <label
+                htmlFor="month"
+                className="mb-2 block text-xs font-medium text-muted"
+              >
+                Reporting period
+              </label>
+              <select
+                id="month"
+                value={month}
+                onChange={(e) => setMonth(e.target.value)}
+                className="w-full rounded-lg border border-line bg-surface px-4 py-2.5 text-ink outline-none focus:border-gold"
+              >
+                {MONTHS.map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label
+                htmlFor="enroll"
+                className="mb-2 block text-xs font-medium text-muted"
+              >
+                Your enroll number
+              </label>
+              <input
+                id="enroll"
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                maxLength={6}
+                required
+                value={enrollNumber}
+                onChange={(e) => {
+                  setEnrollNumber(e.target.value.replace(/\D/g, '').slice(0, 6));
+                  setEnrollError(null);
+                }}
+                aria-invalid={enrollError ? true : undefined}
+                className={`w-full rounded-lg border bg-surface px-4 py-2.5 font-mono text-ink outline-none focus:border-gold ${
+                  enrollError ? 'border-status-risk' : 'border-line'
+                }`}
+                placeholder="e.g. 512345"
+              />
+              {enrollError && (
+                <p role="alert" className="mt-2 flex items-center gap-1.5 text-xs text-status-risk">
+                  <WarningIcon className="h-3.5 w-3.5 shrink-0" />
+                  {enrollError}
+                </p>
+              )}
+            </div>
+          </div>
 
           <button
             type="submit"
-            className="mt-6 w-full rounded-lg bg-gold py-2.5 font-semibold text-[color:var(--color-on-gold)] transition-opacity hover:opacity-90"
+            disabled={!sbuId || !role}
+            className="mt-7 w-full rounded-lg bg-gold py-2.5 font-semibold text-[color:var(--color-on-gold)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Continue
           </button>
