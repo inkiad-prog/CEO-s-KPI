@@ -255,9 +255,11 @@ export function KpiEntryBoxes({
                 {/* Target + Achievement + live % */}
                 <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
                   <div>
-                    <span className="block text-[10px] font-semibold uppercase tracking-wide text-gold">
-                      Target validation
-                    </span>
+                    <div className="h-3.5">
+                      <span className="block text-[10px] font-semibold uppercase tracking-wide text-gold">
+                        Target validation
+                      </span>
+                    </div>
                     <label
                       htmlFor={`target-${k.id}`}
                       className="block text-xs text-muted"
@@ -301,6 +303,7 @@ export function KpiEntryBoxes({
                   </div>
 
                   <div>
+                    <div className="h-3.5" aria-hidden="true" />
                     <label
                       htmlFor={`achievement-${k.id}`}
                       className="block text-xs text-muted"
@@ -344,9 +347,10 @@ export function KpiEntryBoxes({
                   </div>
 
                   <div>
+                    <div className="h-3.5" aria-hidden="true" />
                     <span className="block text-xs text-muted">Achievement %</span>
                     <span
-                      className="mt-0.5 flex items-center gap-1.5 font-mono text-base font-semibold"
+                      className="mt-1 flex items-center gap-1.5 font-mono text-base font-semibold"
                       style={{ color: STATUS_COLOR[statusTier(livePct)] }}
                     >
                       <StatusDot pct={livePct} />
