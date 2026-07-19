@@ -390,9 +390,9 @@ export function KpiEntryBoxes({
                           href={evidenceHref(k.evidence_link)!}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="mt-1 block break-words text-sm text-gold underline transition-colors hover:text-gold-dark"
+                          className="mt-1 inline-block text-sm text-gold underline transition-colors hover:text-gold-dark"
                         >
-                          {k.evidence_link}
+                          Link
                         </a>
                       ) : (
                         <p className="mt-1 break-words text-sm text-muted">
