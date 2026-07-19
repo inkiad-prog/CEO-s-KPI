@@ -33,6 +33,24 @@ export function PencilIcon({ className }: { className?: string }) {
   );
 }
 
+export function CompassIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M14.8 9.2 13 13l-3.8 1.8L11 11l3.8-1.8Z" />
+    </svg>
+  );
+}
+
 export function WarningIcon({ className }: { className?: string }) {
   return (
     <svg

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { BrandMark } from '@/components/BrandMark';
 import { Skeleton } from '@/components/Skeleton';
 import { StatusDot } from '@/components/StatusDot';
-import { WarningIcon } from '@/components/icons';
+import { CompassIcon, WarningIcon } from '@/components/icons';
 import {
   PERSPECTIVE_COLOR,
   STATUS_COLOR,
@@ -246,106 +246,104 @@ export function KpiEntryBoxes({
                 <p className="mt-2 text-xs text-muted">{k.strategic_goal}</p>
                 <h2 className="mt-1 font-display text-lg text-ink">{k.name}</h2>
                 {k.kpi_driver && (
-                  <p className="mt-1 text-[11px] text-muted-2">{k.kpi_driver}</p>
+                  <p className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-2">
+                    <CompassIcon className="h-3.5 w-3.5 shrink-0 text-gold" />
+                    {k.kpi_driver}
+                  </p>
                 )}
 
-                {/* Target + Achievement + live % — equal-width, label beside the box */}
-                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-start">
-                  <div className="flex-1">
-                    <div className="flex items-start gap-2">
-                      <div className="w-24 shrink-0 pt-0.5">
-                        <span className="block text-[10px] font-semibold uppercase tracking-wide text-gold">
-                          Target validation
-                        </span>
-                        <span className="block text-[11px] leading-snug text-muted">
-                          {k.target_validation || 'Target'}{' '}
-                          <span className="text-status-risk">*</span>
-                        </span>
-                      </div>
-                      <div className="flex-1">
-                        {data.locked ? (
-                          <span className="block font-mono text-base font-semibold text-ink">
-                            {k.target_value} {k.uom}
+                {/* Target + Achievement + live % */}
+                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  <div>
+                    <span className="block text-[10px] font-semibold uppercase tracking-wide text-gold">
+                      Target validation
+                    </span>
+                    <label
+                      htmlFor={`target-${k.id}`}
+                      className="block text-xs text-muted"
+                    >
+                      {k.target_validation || 'Target'} <span className="text-status-risk">*</span>
+                    </label>
+                    {data.locked ? (
+                      <span className="mt-0.5 block font-mono text-base font-semibold text-ink">
+                        {k.target_value} {k.uom}
+                      </span>
+                    ) : (
+                      <>
+                        <div className="relative mt-1">
+                          <input
+                            id={`target-${k.id}`}
+                            type="number"
+                            step="any"
+                            value={draft.targetValue}
+                            onChange={(e) =>
+                              updateDraft(k.id, { targetValue: e.target.value })
+                            }
+                            onWheel={(e) => e.currentTarget.blur()}
+                            placeholder={examplePlaceholder(k.uom)}
+                            aria-invalid={missing?.targetValue ? true : undefined}
+                            className={`w-full rounded-lg border bg-surface py-1.5 pl-2.5 pr-12 font-mono text-base font-semibold text-ink outline-none focus:border-gold ${
+                              missing?.targetValue ? 'border-status-risk' : 'border-line'
+                            }`}
+                          />
+                          <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-xs text-muted">
+                            {k.uom}
                           </span>
-                        ) : (
-                          <div className="relative">
-                            <input
-                              id={`target-${k.id}`}
-                              aria-label={`Target — ${k.target_validation || 'Target'}`}
-                              type="number"
-                              step="any"
-                              value={draft.targetValue}
-                              onChange={(e) =>
-                                updateDraft(k.id, { targetValue: e.target.value })
-                              }
-                              onWheel={(e) => e.currentTarget.blur()}
-                              placeholder={examplePlaceholder(k.uom)}
-                              aria-invalid={missing?.targetValue ? true : undefined}
-                              className={`w-full rounded-lg border bg-surface py-1.5 pl-2.5 pr-12 font-mono text-base font-semibold text-ink outline-none focus:border-gold ${
-                                missing?.targetValue ? 'border-status-risk' : 'border-line'
-                              }`}
-                            />
-                            <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-xs text-muted">
-                              {k.uom}
-                            </span>
-                          </div>
+                        </div>
+                        {missing?.targetValue && (
+                          <p className="mt-1 flex items-center gap-1 text-[11px] text-status-risk">
+                            <WarningIcon className="h-3 w-3 shrink-0" />
+                            Required
+                          </p>
                         )}
-                      </div>
-                    </div>
-                    {missing?.targetValue && (
-                      <p className="mt-1 flex items-center gap-1 text-[11px] text-status-risk">
-                        <WarningIcon className="h-3 w-3 shrink-0" />
-                        Required
-                      </p>
+                      </>
                     )}
                   </div>
 
-                  <div className="flex-1">
-                    <div className="flex items-start gap-2">
-                      <div className="w-24 shrink-0 pt-0.5">
-                        <span className="block text-xs text-muted">
-                          Achievement ({k.uom}) <span className="text-status-risk">*</span>
-                        </span>
-                      </div>
-                      <div className="flex-1">
-                        {data.locked ? (
-                          <span className="block font-mono text-base font-semibold text-ink">
-                            {k.achievement_value} {k.uom}
+                  <div>
+                    <label
+                      htmlFor={`achievement-${k.id}`}
+                      className="block text-xs text-muted"
+                    >
+                      Achievement ({k.uom}) <span className="text-status-risk">*</span>
+                    </label>
+                    {data.locked ? (
+                      <span className="mt-0.5 block font-mono text-base font-semibold text-ink">
+                        {k.achievement_value} {k.uom}
+                      </span>
+                    ) : (
+                      <>
+                        <div className="relative mt-1">
+                          <input
+                            id={`achievement-${k.id}`}
+                            type="number"
+                            step="any"
+                            value={draft.achievementValue}
+                            onChange={(e) =>
+                              updateDraft(k.id, { achievementValue: e.target.value })
+                            }
+                            onWheel={(e) => e.currentTarget.blur()}
+                            placeholder={examplePlaceholder(k.uom)}
+                            aria-invalid={missing?.achievementValue ? true : undefined}
+                            className={`w-full rounded-lg border bg-surface py-1.5 pl-2.5 pr-12 font-mono text-base font-semibold text-ink outline-none focus:border-gold ${
+                              missing?.achievementValue ? 'border-status-risk' : 'border-line'
+                            }`}
+                          />
+                          <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-xs text-muted">
+                            {k.uom}
                           </span>
-                        ) : (
-                          <div className="relative">
-                            <input
-                              id={`achievement-${k.id}`}
-                              aria-label={`Achievement (${k.uom})`}
-                              type="number"
-                              step="any"
-                              value={draft.achievementValue}
-                              onChange={(e) =>
-                                updateDraft(k.id, { achievementValue: e.target.value })
-                              }
-                              onWheel={(e) => e.currentTarget.blur()}
-                              placeholder={examplePlaceholder(k.uom)}
-                              aria-invalid={missing?.achievementValue ? true : undefined}
-                              className={`w-full rounded-lg border bg-surface py-1.5 pl-2.5 pr-12 font-mono text-base font-semibold text-ink outline-none focus:border-gold ${
-                                missing?.achievementValue ? 'border-status-risk' : 'border-line'
-                              }`}
-                            />
-                            <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-xs text-muted">
-                              {k.uom}
-                            </span>
-                          </div>
+                        </div>
+                        {missing?.achievementValue && (
+                          <p className="mt-1 flex items-center gap-1 text-[11px] text-status-risk">
+                            <WarningIcon className="h-3 w-3 shrink-0" />
+                            Required
+                          </p>
                         )}
-                      </div>
-                    </div>
-                    {missing?.achievementValue && (
-                      <p className="mt-1 flex items-center gap-1 text-[11px] text-status-risk">
-                        <WarningIcon className="h-3 w-3 shrink-0" />
-                        Required
-                      </p>
+                      </>
                     )}
                   </div>
 
-                  <div className="sm:w-28 sm:shrink-0">
+                  <div>
                     <span className="block text-xs text-muted">Achievement %</span>
                     <span
                       className="mt-0.5 flex items-center gap-1.5 font-mono text-base font-semibold"
@@ -360,44 +358,42 @@ export function KpiEntryBoxes({
                 {/* Evidence + evidence type + data source + evidence owner */}
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <div>
-                    <div className="flex items-start gap-2">
-                      <div className="w-24 shrink-0 pt-0.5">
-                        <span className="block text-[10px] font-semibold uppercase tracking-wide text-gold">
-                          Required evidence
-                        </span>
-                        <span className="block text-[11px] leading-snug text-muted">
-                          {k.required_evidence || 'Evidence'}{' '}
-                          <span className="text-status-risk">*</span>
-                        </span>
-                      </div>
-                      <div className="flex-1">
-                        {data.locked ? (
-                          <p className="break-words text-sm text-muted">
-                            {k.evidence_link || '—'}
-                          </p>
-                        ) : (
-                          <input
-                            id={`evidence-${k.id}`}
-                            aria-label={`Evidence — ${k.required_evidence || 'Evidence'}`}
-                            type="text"
-                            value={draft.evidenceLink}
-                            onChange={(e) =>
-                              updateDraft(k.id, { evidenceLink: e.target.value })
-                            }
-                            placeholder="Link or reference to the evidence"
-                            aria-invalid={missing?.evidenceLink ? true : undefined}
-                            className={`w-full rounded-lg border bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-gold ${
-                              missing?.evidenceLink ? 'border-status-risk' : 'border-line'
-                            }`}
-                          />
-                        )}
-                      </div>
-                    </div>
-                    {missing?.evidenceLink && (
-                      <p className="mt-1 flex items-center gap-1 text-[11px] text-status-risk">
-                        <WarningIcon className="h-3 w-3 shrink-0" />
-                        Required
+                    <label
+                      htmlFor={`evidence-${k.id}`}
+                      className="block text-xs text-muted"
+                    >
+                      Evidence{' '}
+                      {k.required_evidence && (
+                        <span className="text-muted-2">({k.required_evidence})</span>
+                      )}{' '}
+                      <span className="text-status-risk">*</span>
+                    </label>
+                    {data.locked ? (
+                      <p className="mt-1 break-words text-sm text-muted">
+                        {k.evidence_link || '—'}
                       </p>
+                    ) : (
+                      <>
+                        <input
+                          id={`evidence-${k.id}`}
+                          type="text"
+                          value={draft.evidenceLink}
+                          onChange={(e) =>
+                            updateDraft(k.id, { evidenceLink: e.target.value })
+                          }
+                          placeholder="Link or reference to the evidence"
+                          aria-invalid={missing?.evidenceLink ? true : undefined}
+                          className={`mt-1 w-full rounded-lg border bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-gold ${
+                            missing?.evidenceLink ? 'border-status-risk' : 'border-line'
+                          }`}
+                        />
+                        {missing?.evidenceLink && (
+                          <p className="mt-1 flex items-center gap-1 text-[11px] text-status-risk">
+                            <WarningIcon className="h-3 w-3 shrink-0" />
+                            Required
+                          </p>
+                        )}
+                      </>
                     )}
                   </div>
 
