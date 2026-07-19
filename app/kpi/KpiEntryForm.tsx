@@ -5,12 +5,13 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BrandMark } from '@/components/BrandMark';
 import { WarningIcon } from '@/components/icons';
-import { ENROLL_HINT, isValidEnroll } from '@/lib/kpi';
+import { ENROLL_HINT, PERSPECTIVES, isValidEnroll, type Perspective } from '@/lib/kpi';
 
 export function KpiEntryForm() {
   const router = useRouter();
   const [enrollNumber, setEnrollNumber] = useState('');
   const [enrollError, setEnrollError] = useState<string | null>(null);
+  const [perspective, setPerspective] = useState<Perspective | ''>('');
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -18,7 +19,7 @@ export function KpiEntryForm() {
       setEnrollError(ENROLL_HINT);
       return;
     }
-    const params = new URLSearchParams({ enroll: enrollNumber });
+    const params = new URLSearchParams({ enroll: enrollNumber, perspective });
     router.push(`/kpi/entry?${params.toString()}`);
   }
 
@@ -47,7 +48,7 @@ export function KpiEntryForm() {
           className="rounded-lg border border-line bg-surface-2 p-8"
         >
           <p className="text-sm text-muted">
-            Enter your enroll number to continue.
+            Enter your enroll number and choose the perspective you're reporting on.
           </p>
 
           <label
@@ -81,6 +82,29 @@ export function KpiEntryForm() {
               {enrollError}
             </p>
           )}
+
+          <label
+            htmlFor="perspective"
+            className="mt-6 block text-sm font-medium text-ink"
+          >
+            Perspective
+          </label>
+          <select
+            id="perspective"
+            required
+            value={perspective}
+            onChange={(e) => setPerspective(e.target.value as Perspective)}
+            className="mt-2 w-full rounded-lg border border-line bg-surface px-4 py-2.5 text-ink outline-none focus:border-gold"
+          >
+            <option value="" disabled>
+              Choose a perspective…
+            </option>
+            {PERSPECTIVES.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
 
           <button
             type="submit"
