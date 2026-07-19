@@ -284,7 +284,7 @@ export function ReportClient({
                           rel="noopener noreferrer"
                           className="text-gold underline transition-colors hover:text-gold-dark"
                         >
-                          {r.evidence_link}
+                          Link
                         </a>
                       ) : (
                         r.evidence_link || '—'

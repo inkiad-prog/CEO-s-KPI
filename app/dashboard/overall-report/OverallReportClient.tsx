@@ -290,7 +290,7 @@ export function OverallReportClient({ enrollNumber }: { enrollNumber: string }) 
                             rel="noopener noreferrer"
                             className="text-gold underline transition-colors hover:text-gold-dark"
                           >
-                            {r.evidence_link}
+                            Link
                           </a>
                         ) : (
                           r.evidence_link || '—'
