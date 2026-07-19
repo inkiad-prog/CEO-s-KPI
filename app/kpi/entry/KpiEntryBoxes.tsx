@@ -320,11 +320,11 @@ export function KpiEntryBoxes({
                       htmlFor={`achievement-${k.id}`}
                       className="block text-xs text-muted"
                     >
-                      Achievement ({k.uom}) <span className="text-status-risk">*</span>
+                      Achievement <span className="text-status-risk">*</span>
                     </label>
                     {data.locked ? (
                       <span className="mt-0.5 block font-mono text-base font-semibold text-ink">
-                        {k.achievement_value} {k.uom}
+                        {k.achievement_value}
                       </span>
                     ) : (
                       <>
@@ -340,13 +340,10 @@ export function KpiEntryBoxes({
                             onWheel={(e) => e.currentTarget.blur()}
                             placeholder={examplePlaceholder(k.uom)}
                             aria-invalid={missing?.achievementValue ? true : undefined}
-                            className={`w-full rounded-lg border bg-surface py-1.5 pl-2.5 pr-12 font-mono text-base font-semibold text-ink outline-none focus:border-gold ${
+                            className={`w-full rounded-lg border bg-surface py-1.5 px-2.5 font-mono text-base font-semibold text-ink outline-none focus:border-gold ${
                               missing?.achievementValue ? 'border-status-risk' : 'border-line'
                             }`}
                           />
-                          <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 font-mono text-xs text-muted">
-                            {k.uom}
-                          </span>
                         </div>
                         {missing?.achievementValue && (
                           <p className="mt-1 flex items-center gap-1 text-[11px] text-status-risk">
