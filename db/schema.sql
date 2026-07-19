@@ -131,3 +131,13 @@ CREATE INDEX idx_kpi_submissions_simple_month ON kpi_submissions_simple(month);
 CREATE TABLE kpi_simple_set (
   kpi_id int PRIMARY KEY REFERENCES kpis(id)
 );
+
+-- Cluster-wide "Save and close" lock for the simplified flow — one row per month,
+-- inserted once all 4 perspectives have submitted. Mirrors month_finalizations but
+-- keyed on perspective completion instead of SBU x role completion.
+CREATE TABLE month_finalizations_simple (
+  id                  serial PRIMARY KEY,
+  month               date UNIQUE NOT NULL,
+  finalized_by_enroll text NOT NULL,
+  finalized_at        timestamptz NOT NULL DEFAULT now()
+);

@@ -5,15 +5,7 @@ import Link from 'next/link';
 import { BrandMark } from '@/components/BrandMark';
 import { Skeleton } from '@/components/Skeleton';
 import { StatusDot } from '@/components/StatusDot';
-import {
-  MONTHS,
-  PERSPECTIVE_COLOR,
-  SBU_GROUP_LABEL,
-  currentMonthValue,
-  monthLabel,
-  type Perspective,
-  type SbuGroup,
-} from '@/lib/kpi';
+import { MONTHS, PERSPECTIVE_COLOR, currentMonthValue, monthLabel, type Perspective } from '@/lib/kpi';
 import { downloadExcel } from '@/lib/exportExcel';
 
 type ReportRow = {
@@ -28,86 +20,56 @@ type ReportRow = {
   target_validation: string | null;
   kpi_driver: string;
   measurement_criteria: string;
-  data_source: string;
   frequency: string;
-  evidence_type: string;
-  evidence_link_label: string;
-  evidence_owner_role: string;
-  capturing_method: string;
-  achievement_pct: number | null;
-  weighted_score: number | null;
-  // per-SBU scope
-  target_value?: string | null;
-  achievement_value?: string | null;
-  evidence_link?: string | null;
-  evidence_note?: string | null;
-  entered_by_enroll?: string | null;
-  updated_at?: string | null;
-  // cluster scope
-  clusterGoal?: number | null;
-  goalUom?: string;
-  sumTarget?: number;
-  sumAchievement?: number;
-  entryCount?: number;
-  totalSbus?: number;
+  required_evidence: string;
+  target_value: string | null;
+  achievement_value: string | null;
+  achievement_pct: string | null;
+  weighted_score: string | null;
+  evidence_link: string | null;
+  evidence_type: string | null;
+  data_source: string | null;
+  evidence_owner: string | null;
+  entered_by_enroll: string | null;
+  updated_at: string | null;
 };
+
+type Submission = { perspective: Perspective; submitted_by_enroll: string; submitted_at: string };
 
 export function ReportClient({
   enrollNumber,
-  sbus,
-  initialSbuId,
   initialMonth,
 }: {
   enrollNumber: string;
-  sbus: { id: number; name: string }[];
-  initialSbuId: string;
   initialMonth: string;
 }) {
-  const initialIsGroup = initialSbuId === 'trading' || initialSbuId === 'logistics';
-  const [sbuId, setSbuId] = useState(initialIsGroup ? 'all' : initialSbuId || 'all');
-  const [group, setGroup] = useState<'all' | SbuGroup>(
-    initialIsGroup ? (initialSbuId as SbuGroup) : 'all'
-  );
   const [month, setMonth] = useState(initialMonth || currentMonthValue());
-  const [sbuName, setSbuName] = useState('');
-  const [scope, setScope] = useState('all');
   const [rows, setRows] = useState<ReportRow[]>([]);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // The group tabs (Overall / Trading / Logistics) only refine the "All
-  // SBUs" view; picking a specific SBU always overrides them.
-  const apiSbuId = sbuId === 'all' ? group : sbuId;
 
   const load = useCallback(async () => {
     setLoading(true);
-    const res = await fetch(`/api/dashboard/report?sbuId=${apiSbuId}&month=${month}`);
+    const res = await fetch(`/api/dashboard/report-simple?month=${month}`);
     const data = await res.json();
-    setSbuName(data.sbuName ?? '');
-    setScope(data.scope ?? 'all');
     setRows(data.rows ?? []);
+    setSubmissions(data.submissions ?? []);
     setLoading(false);
-  }, [apiSbuId, month]);
+  }, [month]);
 
   useEffect(() => {
     load();
   }, [load]);
 
-  const isCluster = scope === 'all' || scope === 'trading' || scope === 'logistics';
+  const submittedByPerspective = new Map(submissions.map((s) => [s.perspective, s]));
 
   function handleExportExcel() {
     const headers = [
       'SL', 'Perspective', 'Strategic Goal', 'KPI', 'Weight', 'KPI Direction',
-      'Industry Target Benchmark', 'UOM',
-      ...(isCluster
-        ? ['Overall Goal', 'Σ Target', 'Σ Achievement']
-        : ['Target', 'Achievement']),
-      '% Achievement', 'Weighted Score', 'Target Validation', 'KPI Driver',
-      'Measurement Criteria', 'Data Source', 'Frequency', 'Evidence Type',
-      ...(isCluster ? ['Completion'] : ['Evidence Link']),
-      'Evidence Owner',
-      ...(isCluster ? [] : ['Evidence Note']),
-      'Capturing Method',
-      ...(isCluster ? [] : ['Enroll Id', 'Time']),
+      'Industry Target Benchmark', 'UOM', 'Target', 'Achievement', '% Achievement',
+      'Weighted Score', 'Target Validation', 'KPI Driver', 'Measurement Criteria',
+      'Frequency', 'Required Evidence', 'Evidence Link', 'Evidence Type', 'Data Source',
+      'Evidence Owner', 'Entered By', 'Entered At',
     ];
 
     const dataRows = rows.map((r) => [
@@ -119,46 +81,24 @@ export function ReportClient({
       r.direction === 'higher_better' ? 'Higher Better' : 'Lower Better',
       r.industry_benchmark,
       r.uom,
-      ...(isCluster
-        ? [
-            r.clusterGoal !== null && r.clusterGoal !== undefined
-              ? `${r.clusterGoal} ${r.goalUom}`
-              : '',
-            r.sumTarget !== undefined ? Number(r.sumTarget.toFixed(1)) : '',
-            r.sumAchievement !== undefined ? Number(r.sumAchievement.toFixed(1)) : '',
-          ]
-        : [r.target_value ?? '', r.achievement_value ?? '']),
-      r.achievement_pct !== null && r.achievement_pct !== undefined
-        ? `${Number(r.achievement_pct).toFixed(1)}%`
-        : '',
-      r.weighted_score !== null && r.weighted_score !== undefined
-        ? Number(Number(r.weighted_score).toFixed(2))
-        : '',
+      r.target_value ?? '',
+      r.achievement_value ?? '',
+      r.achievement_pct !== null ? `${Number(r.achievement_pct).toFixed(1)}%` : '',
+      r.weighted_score !== null ? Number(Number(r.weighted_score).toFixed(2)) : '',
       r.target_validation ?? '',
       r.kpi_driver,
       r.measurement_criteria,
-      r.data_source,
       r.frequency,
-      r.evidence_type,
-      ...(isCluster
-        ? [`${r.entryCount ?? 0}/${r.totalSbus ?? 0} SBUs`]
-        : [r.evidence_link ?? '']),
-      r.evidence_owner_role,
-      ...(isCluster ? [] : [r.evidence_note ?? '']),
-      r.capturing_method,
-      ...(isCluster
-        ? []
-        : [
-            r.entered_by_enroll ?? '',
-            r.updated_at ? new Date(r.updated_at).toLocaleString() : '',
-          ]),
+      r.required_evidence,
+      r.evidence_link ?? '',
+      r.evidence_type ?? '',
+      r.data_source ?? '',
+      r.evidence_owner ?? '',
+      r.entered_by_enroll ?? '',
+      r.updated_at ? new Date(r.updated_at).toLocaleString() : '',
     ]);
 
-    downloadExcel(
-      `${(sbuName || 'report').replace(/\s+/g, '_')}_${month}.xlsx`,
-      'Report',
-      [headers, ...dataRows]
-    );
+    downloadExcel(`cluster_report_${month}.xlsx`, 'Report', [headers, ...dataRows]);
   }
 
   return (
@@ -184,46 +124,12 @@ export function ReportClient({
                 Detailed report
               </p>
               <h1 className="font-display text-2xl uppercase tracking-wide text-ink">
-                {sbuName || 'Loading…'}
+                Cluster — all perspectives
               </h1>
             </div>
           </div>
 
-          {sbuId === 'all' && (
-            <div className="flex gap-2 print:hidden">
-              {(['all', 'trading', 'logistics'] as const).map((g) => (
-                <button
-                  key={g}
-                  type="button"
-                  onClick={() => setGroup(g)}
-                  className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-colors ${
-                    group === g
-                      ? 'border-gold bg-gold text-[color:var(--color-on-gold)]'
-                      : 'border-line bg-surface-2 text-muted hover:border-gold-dim hover:text-ink'
-                  }`}
-                >
-                  {g === 'all' ? 'Overall' : SBU_GROUP_LABEL[g]}
-                </button>
-              ))}
-            </div>
-          )}
-
           <div className="flex flex-wrap items-end gap-4 print:hidden">
-            <label className="flex flex-col gap-1.5 text-sm">
-              <span className="font-medium text-ink">SBU</span>
-              <select
-                value={sbuId}
-                onChange={(e) => setSbuId(e.target.value)}
-                className="rounded-lg border border-line bg-surface-2 px-3 py-2 text-ink outline-none focus:border-gold"
-              >
-                <option value="all">All SBUs (cluster)</option>
-                {sbus.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-            </label>
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="font-medium text-ink">Period</span>
               <select
@@ -260,14 +166,50 @@ export function ReportClient({
         </div>
 
         {loading ? (
+          <div className="mb-6 space-y-2.5 rounded-lg border border-line bg-surface-2 p-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-6 w-full" />
+            ))}
+          </div>
+        ) : (
+          <section className="mb-6 rounded-lg border border-line bg-surface-2 p-4">
+            <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.15em] text-muted">
+              Who has submitted
+            </p>
+            <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+              {(['Financial', 'Customer', 'Internal Process', 'Learning & Growth'] as const).map(
+                (p) => {
+                  const s = submittedByPerspective.get(p);
+                  return (
+                    <div
+                      key={p}
+                      className="rounded-md border border-line bg-surface px-3 py-2"
+                    >
+                      <p className="text-xs font-medium" style={{ color: PERSPECTIVE_COLOR[p] }}>
+                        {p}
+                      </p>
+                      <p className="mt-0.5 font-mono text-xs text-muted">
+                        {s
+                          ? `${s.submitted_by_enroll} · ${new Date(s.submitted_at).toLocaleString()}`
+                          : 'Not submitted'}
+                      </p>
+                    </div>
+                  );
+                }
+              )}
+            </div>
+          </section>
+        )}
+
+        {loading ? (
           <div className="space-y-2.5 rounded-lg border border-line bg-surface-2 p-4">
-            {Array.from({ length: 10 }).map((_, i) => (
+            {Array.from({ length: 9 }).map((_, i) => (
               <Skeleton key={i} className="h-6 w-full" />
             ))}
           </div>
         ) : (
           <div className="overflow-x-auto rounded-lg border border-line bg-surface-2 p-4">
-            <table className="w-full min-w-[2400px] border-collapse text-xs">
+            <table className="w-full min-w-[2000px] border-collapse text-xs">
               <thead>
                 <tr className="border-b border-line text-left uppercase tracking-wide text-muted">
                   <th className="whitespace-nowrap px-2 py-2 font-medium">SL</th>
@@ -278,42 +220,21 @@ export function ReportClient({
                   <th className="whitespace-nowrap px-2 py-2 font-medium">KPI Direction</th>
                   <th className="whitespace-nowrap px-2 py-2 font-medium">Industry Target Benchmark</th>
                   <th className="whitespace-nowrap px-2 py-2 font-medium">UOM</th>
-                  {isCluster ? (
-                    <>
-                      <th className="whitespace-nowrap px-2 py-2 font-medium">Overall Goal</th>
-                      <th className="whitespace-nowrap px-2 py-2 font-medium">Σ Target</th>
-                      <th className="whitespace-nowrap px-2 py-2 font-medium">Σ Achievement</th>
-                    </>
-                  ) : (
-                    <>
-                      <th className="whitespace-nowrap px-2 py-2 font-medium">Target</th>
-                      <th className="whitespace-nowrap px-2 py-2 font-medium">Achievement</th>
-                    </>
-                  )}
+                  <th className="whitespace-nowrap px-2 py-2 font-medium">Target</th>
+                  <th className="whitespace-nowrap px-2 py-2 font-medium">Achievement</th>
                   <th className="whitespace-nowrap px-2 py-2 font-medium">% Achievement</th>
                   <th className="whitespace-nowrap px-2 py-2 font-medium">Weighted Score</th>
                   <th className="whitespace-nowrap px-2 py-2 font-medium">Target Validation</th>
                   <th className="whitespace-nowrap px-2 py-2 font-medium">KPI Driver</th>
                   <th className="whitespace-nowrap px-2 py-2 font-medium">Measurement Criteria</th>
-                  <th className="whitespace-nowrap px-2 py-2 font-medium">Data Source</th>
                   <th className="whitespace-nowrap px-2 py-2 font-medium">Frequency</th>
+                  <th className="whitespace-nowrap px-2 py-2 font-medium">Required Evidence</th>
+                  <th className="whitespace-nowrap px-2 py-2 font-medium">Evidence Link</th>
                   <th className="whitespace-nowrap px-2 py-2 font-medium">Evidence Type</th>
-                  {isCluster ? (
-                    <th className="whitespace-nowrap px-2 py-2 font-medium">Completion</th>
-                  ) : (
-                    <th className="whitespace-nowrap px-2 py-2 font-medium">Evidence Link</th>
-                  )}
+                  <th className="whitespace-nowrap px-2 py-2 font-medium">Data Source</th>
                   <th className="whitespace-nowrap px-2 py-2 font-medium">Evidence Owner</th>
-                  {!isCluster && (
-                    <th className="whitespace-nowrap px-2 py-2 font-medium">Evidence Note</th>
-                  )}
-                  <th className="whitespace-nowrap px-2 py-2 font-medium">Capturing Method</th>
-                  {!isCluster && (
-                    <>
-                      <th className="whitespace-nowrap px-2 py-2 font-medium">Enroll Id</th>
-                      <th className="whitespace-nowrap px-2 py-2 font-medium">Time</th>
-                    </>
-                  )}
+                  <th className="whitespace-nowrap px-2 py-2 font-medium">Entered By</th>
+                  <th className="whitespace-nowrap px-2 py-2 font-medium">Entered At</th>
                 </tr>
               </thead>
               <tbody>
@@ -333,81 +254,40 @@ export function ReportClient({
                     </td>
                     <td className="max-w-[180px] px-2 py-2 text-muted">{r.industry_benchmark}</td>
                     <td className="px-2 py-2 text-muted">{r.uom}</td>
-                    {isCluster ? (
-                      <>
-                        <td className="whitespace-nowrap px-2 py-2 font-mono text-muted">
-                          {r.clusterGoal !== null && r.clusterGoal !== undefined
-                            ? `${r.clusterGoal} ${r.goalUom}`
-                            : '—'}
-                        </td>
-                        <td className="whitespace-nowrap px-2 py-2 font-mono text-ink">
-                          {r.sumTarget !== undefined ? r.sumTarget.toFixed(1) : '—'}
-                        </td>
-                        <td className="whitespace-nowrap px-2 py-2 font-mono text-ink">
-                          {r.sumAchievement !== undefined ? r.sumAchievement.toFixed(1) : '—'}
-                        </td>
-                      </>
-                    ) : (
-                      <>
-                        <td className="whitespace-nowrap px-2 py-2 font-mono text-ink">
-                          {r.target_value ?? '—'}
-                        </td>
-                        <td className="whitespace-nowrap px-2 py-2 font-mono text-ink">
-                          {r.achievement_value ?? '—'}
-                        </td>
-                      </>
-                    )}
+                    <td className="whitespace-nowrap px-2 py-2 font-mono text-ink">
+                      {r.target_value ?? '—'}
+                    </td>
+                    <td className="whitespace-nowrap px-2 py-2 font-mono text-ink">
+                      {r.achievement_value ?? '—'}
+                    </td>
                     <td className="whitespace-nowrap px-2 py-2 font-mono text-ink">
                       <span className="inline-flex items-center gap-1.5">
-                        <StatusDot
-                          pct={
-                            r.achievement_pct !== null && r.achievement_pct !== undefined
-                              ? Number(r.achievement_pct)
-                              : null
-                          }
-                        />
-                        {r.achievement_pct !== null && r.achievement_pct !== undefined
-                          ? `${Number(r.achievement_pct).toFixed(1)}%`
-                          : '—'}
+                        <StatusDot pct={r.achievement_pct !== null ? Number(r.achievement_pct) : null} />
+                        {r.achievement_pct !== null ? `${Number(r.achievement_pct).toFixed(1)}%` : '—'}
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-2 py-2 font-mono text-gold">
-                      {r.weighted_score !== null && r.weighted_score !== undefined
-                        ? Number(r.weighted_score).toFixed(2)
-                        : '—'}
+                      {r.weighted_score !== null ? Number(r.weighted_score).toFixed(2) : '—'}
                     </td>
                     <td className="max-w-[180px] px-2 py-2 text-muted">{r.target_validation}</td>
                     <td className="max-w-[200px] px-2 py-2 text-muted">{r.kpi_driver}</td>
                     <td className="max-w-[240px] px-2 py-2 font-mono text-[11px] text-muted-2">
                       {r.measurement_criteria}
                     </td>
-                    <td className="max-w-[160px] px-2 py-2 text-muted">{r.data_source}</td>
                     <td className="whitespace-nowrap px-2 py-2 text-muted">{r.frequency}</td>
-                    <td className="whitespace-nowrap px-2 py-2 text-muted">{r.evidence_type}</td>
-                    {isCluster ? (
-                      <td className="whitespace-nowrap px-2 py-2 font-mono text-muted">
-                        {r.entryCount ?? 0}/{r.totalSbus ?? 0} SBUs
-                      </td>
-                    ) : (
-                      <td className="max-w-[160px] break-words px-2 py-2 text-muted">
-                        {r.evidence_link || '—'}
-                      </td>
-                    )}
-                    <td className="whitespace-nowrap px-2 py-2 text-muted">{r.evidence_owner_role}</td>
-                    {!isCluster && (
-                      <td className="max-w-[180px] px-2 py-2 text-muted">{r.evidence_note || '—'}</td>
-                    )}
-                    <td className="whitespace-nowrap px-2 py-2 text-muted">{r.capturing_method}</td>
-                    {!isCluster && (
-                      <>
-                        <td className="whitespace-nowrap px-2 py-2 font-mono text-ink">
-                          {r.entered_by_enroll || '—'}
-                        </td>
-                        <td className="whitespace-nowrap px-2 py-2 font-mono text-muted">
-                          {r.updated_at ? new Date(r.updated_at).toLocaleString() : '—'}
-                        </td>
-                      </>
-                    )}
+                    <td className="max-w-[180px] px-2 py-2 text-muted">{r.required_evidence}</td>
+                    <td className="max-w-[160px] break-words px-2 py-2 text-muted">
+                      {r.evidence_link || '—'}
+                    </td>
+                    <td className="whitespace-nowrap px-2 py-2 text-muted">{r.evidence_type || '—'}</td>
+                    <td className="max-w-[160px] px-2 py-2 text-muted">{r.data_source || '—'}</td>
+                    <td className="whitespace-nowrap px-2 py-2 text-muted">{r.evidence_owner || '—'}</td>
+                    <td className="whitespace-nowrap px-2 py-2 font-mono text-ink">
+                      {r.entered_by_enroll || '—'}
+                    </td>
+                    <td className="whitespace-nowrap px-2 py-2 font-mono text-muted">
+                      {r.updated_at ? new Date(r.updated_at).toLocaleString() : '—'}
+                    </td>
                   </tr>
                 ))}
               </tbody>
