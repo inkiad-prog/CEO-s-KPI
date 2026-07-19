@@ -252,6 +252,9 @@ export function KpiEntryBoxes({
                   <span className="inline-flex items-center rounded-full border border-line bg-surface px-2.5 py-0.5 font-mono text-[11px] text-muted">
                     Weight {Number(k.weight_pct)}%
                   </span>
+                  <span className="inline-flex items-center rounded-full border border-line bg-surface px-2.5 py-0.5 font-mono text-[11px] text-muted">
+                    UOM {k.uom}
+                  </span>
                 </div>
                 <p className="mt-2 text-xs text-muted">{k.strategic_goal}</p>
                 <h2 className="mt-1 font-display text-lg text-ink">{k.name}</h2>
