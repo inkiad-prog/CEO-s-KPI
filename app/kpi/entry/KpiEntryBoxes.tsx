@@ -240,9 +240,17 @@ export function KpiEntryBoxes({
                 key={k.id}
                 className="rounded-lg border border-line bg-surface-2 p-6"
               >
-                <span className="inline-flex items-center rounded-full border border-line bg-surface px-2.5 py-0.5 font-mono text-[11px] text-muted">
-                  Weight {Number(k.weight_pct)}%
-                </span>
+                <div className="flex items-center gap-2">
+                  <span
+                    className="inline-flex items-center rounded-full border border-line bg-surface px-2.5 py-0.5 font-mono text-[11px]"
+                    style={{ color: perspColor }}
+                  >
+                    SL {String(k.sl).padStart(2, '0')}
+                  </span>
+                  <span className="inline-flex items-center rounded-full border border-line bg-surface px-2.5 py-0.5 font-mono text-[11px] text-muted">
+                    Weight {Number(k.weight_pct)}%
+                  </span>
+                </div>
                 <p className="mt-2 text-xs text-muted">{k.strategic_goal}</p>
                 <h2 className="mt-1 font-display text-lg text-ink">{k.name}</h2>
                 {k.kpi_driver && (
@@ -255,16 +263,16 @@ export function KpiEntryBoxes({
                 {/* Target + Achievement + live % */}
                 <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
                   <div>
-                    <div className="h-3.5">
-                      <span className="block text-[10px] font-semibold uppercase tracking-wide text-gold">
-                        Target validation
-                      </span>
-                    </div>
                     <label
                       htmlFor={`target-${k.id}`}
-                      className="block text-xs text-muted"
+                      className="block truncate text-xs text-muted"
+                      title={k.target_validation || undefined}
                     >
-                      {k.target_validation || 'Target'} <span className="text-status-risk">*</span>
+                      Target{' '}
+                      {k.target_validation && (
+                        <span className="text-muted-2">({k.target_validation})</span>
+                      )}{' '}
+                      <span className="text-status-risk">*</span>
                     </label>
                     {data.locked ? (
                       <span className="mt-0.5 block font-mono text-base font-semibold text-ink">
@@ -303,7 +311,6 @@ export function KpiEntryBoxes({
                   </div>
 
                   <div>
-                    <div className="h-3.5" aria-hidden="true" />
                     <label
                       htmlFor={`achievement-${k.id}`}
                       className="block text-xs text-muted"
@@ -347,7 +354,6 @@ export function KpiEntryBoxes({
                   </div>
 
                   <div>
-                    <div className="h-3.5" aria-hidden="true" />
                     <span className="block text-xs text-muted">Achievement %</span>
                     <span
                       className="mt-1 flex items-center gap-1.5 font-mono text-base font-semibold"
@@ -364,7 +370,8 @@ export function KpiEntryBoxes({
                   <div>
                     <label
                       htmlFor={`evidence-${k.id}`}
-                      className="block text-xs text-muted"
+                      className="block truncate text-xs text-muted"
+                      title={k.required_evidence || undefined}
                     >
                       Evidence{' '}
                       {k.required_evidence && (
