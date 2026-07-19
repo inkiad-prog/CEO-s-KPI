@@ -10,6 +10,7 @@ import {
   PERSPECTIVE_COLOR,
   STATUS_COLOR,
   achievementPct,
+  evidenceHref,
   examplePlaceholder,
   monthLabel,
   statusTier,
@@ -381,9 +382,20 @@ export function KpiEntryBoxes({
                       <span className="text-status-risk">*</span>
                     </label>
                     {data.locked ? (
-                      <p className="mt-1 break-words text-sm text-muted">
-                        {k.evidence_link || '—'}
-                      </p>
+                      evidenceHref(k.evidence_link) ? (
+                        <a
+                          href={evidenceHref(k.evidence_link)!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-1 block break-words text-sm text-gold underline transition-colors hover:text-gold-dark"
+                        >
+                          {k.evidence_link}
+                        </a>
+                      ) : (
+                        <p className="mt-1 break-words text-sm text-muted">
+                          {k.evidence_link || '—'}
+                        </p>
+                      )
                     ) : (
                       <>
                         <input

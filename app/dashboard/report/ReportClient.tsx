@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { BrandMark } from '@/components/BrandMark';
 import { Skeleton } from '@/components/Skeleton';
 import { StatusDot } from '@/components/StatusDot';
-import { MONTHS, PERSPECTIVE_COLOR, currentMonthValue, monthLabel, type Perspective } from '@/lib/kpi';
+import { MONTHS, PERSPECTIVE_COLOR, currentMonthValue, evidenceHref, monthLabel, type Perspective } from '@/lib/kpi';
 import { downloadExcel } from '@/lib/exportExcel';
 
 type ReportRow = {
@@ -277,7 +277,18 @@ export function ReportClient({
                     <td className="whitespace-nowrap px-2 py-2 text-muted">{r.frequency}</td>
                     <td className="max-w-[180px] px-2 py-2 text-muted">{r.required_evidence}</td>
                     <td className="max-w-[160px] break-words px-2 py-2 text-muted">
-                      {r.evidence_link || '—'}
+                      {evidenceHref(r.evidence_link) ? (
+                        <a
+                          href={evidenceHref(r.evidence_link)!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-gold underline transition-colors hover:text-gold-dark"
+                        >
+                          {r.evidence_link}
+                        </a>
+                      ) : (
+                        r.evidence_link || '—'
+                      )}
                     </td>
                     <td className="whitespace-nowrap px-2 py-2 text-muted">{r.evidence_type || '—'}</td>
                     <td className="max-w-[160px] px-2 py-2 text-muted">{r.data_source || '—'}</td>

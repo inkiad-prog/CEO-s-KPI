@@ -107,6 +107,17 @@ export const PERSPECTIVE_COLOR: Record<Perspective, string> = {
   'Learning & Growth': 'var(--color-persp-growth)',
 };
 
+// Best-effort: turns an evidence value into a clickable href if it looks like
+// a URL, without requiring the field to be a strict URL at entry time.
+export function evidenceHref(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (/^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(trimmed)) return `https://${trimmed}`;
+  return null;
+}
+
 export function examplePlaceholder(uom: string): string {
   switch (uom) {
     case '%':
