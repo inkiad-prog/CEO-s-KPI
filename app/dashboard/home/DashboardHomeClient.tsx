@@ -284,9 +284,7 @@ export function DashboardHomeClient({
                     <span
                       className={`font-mono text-xs ${p.submitted ? 'text-status-good' : 'text-muted'}`}
                     >
-                      {p.submitted
-                        ? `Submitted · ${p.submittedByEnroll} · ${p.submittedAt ? new Date(p.submittedAt).toLocaleDateString() : ''}`
-                        : 'Not submitted'}
+                      {p.submitted ? 'Submitted' : 'Not submitted'}
                     </span>
                   </div>
                 ))}

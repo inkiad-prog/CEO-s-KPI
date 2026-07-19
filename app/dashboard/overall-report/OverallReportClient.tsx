@@ -76,8 +76,8 @@ export function OverallReportClient({ enrollNumber }: { enrollNumber: string }) 
     const headers = [
       'SL', 'Perspective', 'Strategic Goal', 'KPI', 'Weight', 'KPI Direction',
       'Industry Target Benchmark', 'UOM', 'Target', 'Achievement', 'Achievement %',
-      'Weighted Score', 'Target Validation', 'KPI Driver', 'Measurement Criteria',
-      'Frequency', 'Required Evidence', 'Evidence Type', 'Evidence Link', 'Evidence Owner',
+      'Weighted Score', 'Target Validation', 'KPI Driver',
+      'Required Evidence', 'Evidence Type', 'Evidence Link', 'Evidence Owner',
       'Entered By', 'Entered At',
     ];
 
@@ -96,8 +96,6 @@ export function OverallReportClient({ enrollNumber }: { enrollNumber: string }) 
       r.weighted_score !== null ? Number(Number(r.weighted_score).toFixed(2)) : '',
       r.target_validation ?? '',
       r.kpi_driver,
-      r.measurement_criteria,
-      r.frequency,
       r.required_evidence,
       r.evidence_type ?? '',
       r.evidence_link ?? '',
@@ -234,8 +232,6 @@ export function OverallReportClient({ enrollNumber }: { enrollNumber: string }) 
                     <th className="whitespace-nowrap px-2 py-2 font-medium">Weighted Score</th>
                     <th className="whitespace-nowrap px-2 py-2 font-medium">Target Validation</th>
                     <th className="whitespace-nowrap px-2 py-2 font-medium">KPI Driver</th>
-                    <th className="whitespace-nowrap px-2 py-2 font-medium">Measurement Criteria</th>
-                    <th className="whitespace-nowrap px-2 py-2 font-medium">Frequency</th>
                     <th className="whitespace-nowrap px-2 py-2 font-medium">Required Evidence</th>
                     <th className="whitespace-nowrap px-2 py-2 font-medium">Evidence Type</th>
                     <th className="whitespace-nowrap px-2 py-2 font-medium">Evidence Link</th>
@@ -276,10 +272,6 @@ export function OverallReportClient({ enrollNumber }: { enrollNumber: string }) 
                       </td>
                       <td className="max-w-[180px] px-2 py-2 text-muted">{r.target_validation}</td>
                       <td className="max-w-[200px] px-2 py-2 text-muted">{r.kpi_driver}</td>
-                      <td className="max-w-[240px] px-2 py-2 font-mono text-[10px] text-muted-2">
-                        {r.measurement_criteria}
-                      </td>
-                      <td className="whitespace-nowrap px-2 py-2 text-muted">{r.frequency}</td>
                       <td className="max-w-[160px] px-2 py-2 text-muted">{r.required_evidence}</td>
                       <td className="whitespace-nowrap px-2 py-2 text-muted">{r.evidence_type || '—'}</td>
                       <td className="max-w-[160px] break-words px-2 py-2 text-muted">
